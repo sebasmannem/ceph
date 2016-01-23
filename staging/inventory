@@ -1,0 +1,6 @@
+[NODES]
+ceph-node1
+ceph-node2
+
+[DEPLOY]
+ceph-ctl1

@@ -1,0 +1,7 @@
+---
+- hosts: DEPLOY
+  become: yes
+  become_method: sudo
+  roles:
+#  - common
+  - deploy
