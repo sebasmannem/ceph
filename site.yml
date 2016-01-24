@@ -1,5 +1,11 @@
 ---
 - hosts:
+  - all
+  gather_facts: False
+  tasks:
+  - setup:
+
+- hosts:
   - localhost
   tasks:
   - name: Create local temp folder
@@ -14,8 +20,22 @@
   - deploy
 
 - hosts:
+  - localhost
+  tasks:
+  - name: Collect id_rsa.pubs
+    shell: cat {{ mktemp.stdout }}/*
+    register: id_rsa_pubs
+
+- hosts:
   - NODES
   become: yes
   become_method: sudo
   roles:
   - node
+
+- hosts:
+  - localhost
+  tasks:
+  - name: Cleanup local temp folder
+    file: state=absent dest={{ mktemp.stdout }}
+
