@@ -1,0 +1,4 @@
+- name: create ceph user
+  user: name=ceph comment="user for ceph"
+- name: grant sudo nopassword to ceph user
+  copy: src='ceph.sudo' dest='/etc/sudoers.d/ceph' owner='root' group='root' mode=0440

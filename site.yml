@@ -1,7 +1,21 @@
 ---
-- hosts: DEPLOY
+- hosts:
+  - localhost
+  tasks:
+  - name: Create local temp folder
+    local_action: command mktemp -d
+    register: mktemp
+
+- hosts:
+  - DEPLOY
   become: yes
   become_method: sudo
   roles:
-#  - common
   - deploy
+
+- hosts:
+  - NODES
+  become: yes
+  become_method: sudo
+  roles:
+  - node

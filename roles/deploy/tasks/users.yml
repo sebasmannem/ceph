@@ -1,0 +1,4 @@
+- name: create ceph user
+  user: name=ceph comment="user for ceph" generate_ssh_key=yes
+- name: copy ssh key o local temp folder
+  fetch: src=/home/ceph/.ssh/id_rsa.pub dest="{{ hostvars['localhost']['mktemp']['stdout'] }}/{{ ansible_hostname }}.id_rsa.pub"
