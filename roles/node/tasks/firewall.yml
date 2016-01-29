@@ -1,0 +1,11 @@
+- name: find interfaces
+  shell: ip route get {{item}} | awk '/[a-zA-Z0-9]/{print $4}' | xargs
+  with_items:
+  - "{{public_nw}}"
+  - "{{cluster_nw}}"
+  register: ifaces
+- name: show
+  iptables: chain=INPUT destination_port={{item[1]}} in_interface={{item[0]['item']}} source={{item[1]['stdout']}} jump=ACCEPT protocol=tcp state=present
+  with_nested:
+  - ifaces.results
+  - [ '{{monitor_port}}', '{{osd_start_port}}:{{osd_start_port+osd_daemons*4+osd_reservation}}' ]

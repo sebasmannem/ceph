@@ -1,0 +1,2 @@
+# CHange requiretty and validate the sudoers file before saving
+- lineinfile: dest=/etc/sudoers state=present regexp='^Defaults requiretty.*' line='Defaults:ceph !requiretty' validate='visudo -cf %s'

@@ -1,9 +1,9 @@
 ---
+
 - hosts:
   - all
-  gather_facts: False
-  tasks:
-  - setup:
+  roles:
+  - common
 
 - hosts:
   - localhost

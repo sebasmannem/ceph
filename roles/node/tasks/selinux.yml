@@ -1,0 +1,4 @@
+- name: change selinux running config
+  shell: setenforce 0
+- name: change selinux default config
+  lineinfile: dest='/etc/selinux/config' regexp='^SELINUX=.*' line='SELINUX=permissive'

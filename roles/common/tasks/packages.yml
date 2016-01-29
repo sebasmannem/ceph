@@ -1,0 +1,4 @@
+- name: install libselinux-python (needed for selinux with create repo)
+  yum: state='present' name='libselinux-python'
+- name: yum update
+  yum: state='latest' name='*'
