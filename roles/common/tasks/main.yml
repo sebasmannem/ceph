@@ -1,2 +1,2 @@
-- include:
-  - priorities.yml
+- include: packages.yml
+- include: priorities.yml
