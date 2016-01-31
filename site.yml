@@ -1,11 +1,10 @@
 ---
 
-- hosts:
-  - all
-  become: yes
-  become_method: sudo
-  roles:
-  - common
+- hosts: all
+  gather_facts: no
+  tasks:
+  - name: read facts
+    setup:
 
 - hosts:
   - localhost
@@ -27,6 +26,13 @@
   - name: Collect id_rsa.pubs
     shell: cat {{ mktemp.stdout }}/*
     register: id_rsa_pubs
+
+- hosts:
+  - all
+  become: yes
+  become_method: sudo
+  roles:
+  - common
 
 - hosts:
   - NODES

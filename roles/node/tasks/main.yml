@@ -1,5 +1,4 @@
 - include: packages.yml
-- include: users.yml
 - include: firewall.yml
 - include: tty.yml
 - include: selinux.yml

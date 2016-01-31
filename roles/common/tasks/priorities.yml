@@ -2,7 +2,7 @@
   yum:
     name: "{{ epel_repo_url }}"
     state: present
-#  when: ansible_distribution == "CentOS"
+  when: ansible_distribution == "CentOS"
   register: result
   until: '"failed" not in result'
   retries: 5
@@ -12,7 +12,7 @@
   rpm_key:
     key: "{{ epel_repo_gpg_key_url }}"
     state: present
-#  when: ansible_distribution == "CentOS"
+  when: ansible_distribution == "CentOS"
 
 - name: install priorities package
   yum: name=yum-plugin-priorities state=present
