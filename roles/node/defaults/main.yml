@@ -7,8 +7,10 @@ cluster_nw: 192.168.122.0/24
 #Port for ceph monitor proces
 monitor_port: 6789
 
+#Port for cepg rgw proces
+rgw_port: 7480
+
 #OSD start port, number of daemons and reservation. Range will be calculated by ansible.
 osd_start_port: 6800
-osd_daemons: 1
-osd_reservation: 4
+osd_end_port: 7300
 
