@@ -1,2 +1,4 @@
 *.pyc
 /site.retry
+staging/*
+!staging/inventory.example
