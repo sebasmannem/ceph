@@ -1,6 +1,13 @@
+- name: Install EPEL repo
+  yum:
+    name: epel-release
+    state: present
+  when: ansible_distribution == "CentOS"
+
 - name: install libselinux-python (needed for selinux with create repo)
   yum: state='present' name='libselinux-python'
 - name: Config repo
   copy: src=ceph.repo dest=/etc/yum.repos.d/ceph.repo owner=root group=root mode=0644
+
 - name: yum update
   yum: state='latest' name='*'

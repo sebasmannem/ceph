@@ -1,0 +1,20 @@
+- name: plaats Puppet repo file
+  copy: src=puppetlabs.repo dest=/etc/yum.repos.d/puppetlabs-pc1.repo mode=644 owner=root group=root force=yes
+
+- name: plaats Puppet GPG key file
+  copy: src=puppetlabs_GPG.key dest=/etc/pki/rpm-gpg/RPM-GPG-KEY-puppetlabs-PC1 mode=644 owner=root group=root force=yes
+
+- name: zet hostname
+  command: /usr/bin/hostnamectl set-hostname {{ inventory_hostname }}
+
+- name: import Puppetlabs GPG key
+  rpm_key: state=present key=/etc/pki/rpm-gpg/RPM-GPG-KEY-puppetlabs-PC1
+
+- name: install packages
+  yum: name={{item}} state=installed
+  with_items:
+      - puppet-agent
+
+- name: upgrade all packages
+  yum: name=* state=latest
+

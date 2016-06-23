@@ -1,11 +1,5 @@
-- name: install packages
-  yum: name={{item}} state=installed
-  with_items:
-      - epel-release
-
-- name: upgrade all packages
-  yum: name=* state=latest
-
 - include: packages.yml
+- include: puppet.yml
 - include: priorities.yml
 - include: users.yml
+
