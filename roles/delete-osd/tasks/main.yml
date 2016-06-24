@@ -1,0 +1,16 @@
+---
+###############################################################################################
+# This role deletes an CEPH OSD from a running CEPH cluster.
+# Note: This is for our specific setup with only one ceph-osd daemon (== disk) per server.
+# It removes the packages, configurations and all data from the OSD.
+# It uses the exOSD inventory group from the Ansible inventory.
+###############################################################################################
+
+- name: Check the health of the CEPH cluster.
+  command: ceph health
+
+
+- name: Check the status of the CEPH cluster.
+  command: ceph status
+
+  
