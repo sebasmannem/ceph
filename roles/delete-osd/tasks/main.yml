@@ -8,7 +8,7 @@
 ###############################################################################################
 
 - name: Check OSD's on this host.
-  shell: "systemctl | sed -nr '/ceph-osd@[0-9]+\.service/{s/ceph-osd@([0-9]+)\.service/\1/;p}'"
+  script: osds_on_this_host.sh
   register: host_osds
 
 - name: Check the health of the CEPH cluster.
@@ -17,14 +17,14 @@
 # works, but wait_for_health_ok.sh waits until, for x seconds...
 
 - name: Check before we act
-  debug: "In a future version, we might test here hoqw much GB we are detaching and if there is enough free space before we continue. Not yet implemented though."
+  debug: msg="In a future version, we might test here hoqw much GB we are detaching and if there is enough free space before we continue. Not yet implemented though."
 
 - name: Still healthy? If not, lets just break and let people decide why we're in a stable enough situation to continue...
   command: /usr/bin/ceph health
 
 - name: Take OSD out of cluster
-  command: /usr/bin/ceph osd out "{{item}}"
-  with_items: host_osds.stdout_lines
+  command: "/usr/bin/ceph osd out {{item}}"
+  with_items: '{{host_osds.stdout_lines}}'
 
 # wait_for_health_ok.sh 300 will check every second for 300 secs (5 mins)
 # after which ansible will display something (so that you think there might be progression...)
@@ -38,19 +38,23 @@
 
 - name: stop service
   service: name="ceph-osd@{{item}}" state=stopped enabled=no
-  with_items: host_osds.stdout_lines
+  with_items: '{{host_osds.stdout_lines}}'
+
+- name: empty osd disk
+  script: empty_osd_disk.sh "{{item}}"
+  with_items: '{{host_osds.stdout_lines}}'
 
 - name: Crush
   command: /usr/bin/ceph osd crush remove "osd.{{item}}"
-  with_items: host_osds.stdout_lines
+  with_items: '{{host_osds.stdout_lines}}'
 
 - name: Remove Authkey
   command: /usr/bin/ceph auth del "osd.{{item}}"
-  with_items: host_osds.stdout_lines
+  with_items: '{{host_osds.stdout_lines}}'
 
 - name: Remove OSD
   command: /usr/bin/ceph osd rm "{{item}}"
-  with_items: host_osds.stdout_lines
+  with_items: '{{host_osds.stdout_lines}}'
 
 - name: update master ceph.conf
   debug: msg="In our tests there was no master ceph.conf file to be identified. Furthermore we don't add keys there either. Skipping for now..."
