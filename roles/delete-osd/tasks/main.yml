@@ -4,13 +4,58 @@
 # Note: This is for our specific setup with only one ceph-osd daemon (== disk) per server.
 # It removes the packages, configurations and all data from the OSD.
 # It uses the exOSD inventory group from the Ansible inventory.
+# For further info, see: http://docs.ceph.com/docs/hammer/rados/operations/add-or-rm-osds/.
 ###############################################################################################
 
+- name: Check OSD's on this host.
+  shell: "systemctl | sed -nr '/ceph-osd@[0-9]+\.service/{s/ceph-osd@([0-9]+)\.service/\1/;p}'"
+  register: host_osds
+
 - name: Check the health of the CEPH cluster.
-  command: ceph health
+  script: wait_for_health_ok.sh 60
+#  command: ceph health
+# works, but wait_for_health_ok.sh waits until, for x seconds...
+
+- name: Check before we act
+  debug: "In a future version, we might test here hoqw much GB we are detaching and if there is enough free space before we continue. Not yet implemented though."
+
+- name: Still healthy? If not, lets just break and let people decide why we're in a stable enough situation to continue...
+  command: /usr/bin/ceph health
+
+- name: Take OSD out of cluster
+  command: /usr/bin/ceph osd out "{{item}}"
+  with_items: host_osds.stdout_lines
+
+# wait_for_health_ok.sh 300 will check every second for 300 secs (5 mins)
+# after which ansible will display something (so that you think there might be progression...)
+# retries 12 will try this for 12 times, so wait for an hour until it fails.
+# An hour might seem much, but taking out many nodes with many disks might have a huge impact...
+# Tuning might be required when more experience is achieved...
+
+- name: Wait for rebalance to finish
+  script: wait_for_health_ok.sh 300
+  retries: 12
+
+- name: stop service
+  service: name="ceph-osd@{{item}}" state=stopped enabled=no
+  with_items: host_osds.stdout_lines
+
+- name: Crush
+  command: /usr/bin/ceph osd crush remove "osd.{{item}}"
+  with_items: host_osds.stdout_lines
+
+- name: Remove Authkey
+  command: /usr/bin/ceph auth del "osd.{{item}}"
+  with_items: host_osds.stdout_lines
+
+- name: Remove OSD
+  command: /usr/bin/ceph osd rm "{{item}}"
+  with_items: host_osds.stdout_lines
+
+- name: update master ceph.conf
+  debug: msg="In our tests there was no master ceph.conf file to be identified. Furthermore we don't add keys there either. Skipping for now..."
+
+#- name: Check the status of the CEPH cluster.
+#  command: ceph status
 
 
-- name: Check the status of the CEPH cluster.
-  command: ceph status
-
-  

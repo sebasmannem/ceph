@@ -1,7 +1,23 @@
-[NODES]
-ceph-node1
-ceph-node2
-ceph-node3
-
 [DEPLOY]
 ceph-deploy
+
+[OSD]
+# to be deployed OSD's
+ceph-osd2
+ceph-osd3
+ceph-osd4
+
+[MON]
+# to be deployed Monitors
+ceph-mon2
+
+[exOSD]
+ceph-osd1
+
+[exMON]
+ceph-mon1
+
+[CEPH:children]
+OSD
+MON
+DEPLOY
