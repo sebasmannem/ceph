@@ -2,12 +2,18 @@
 - name: Create temp dir
   register: temp_dir
   command: mktemp -d
+  become: yes
+  become_user: ceph
 
 - name: Fetch Ceph Monitor Keyring
   command: ceph auth get mon. -o mon_keyring_file
   args:
     chdir: "{{temp_dir.stdout}}"
 
+# We should add:
+# public_network = 10.64.22.162/27
+# to
+# /etc/ceph/ceph.conf
 
 - name: Fetch Ceph Monitor Mapfile
   command: ceph mon getmap -o mon_map_file
@@ -31,9 +37,20 @@
   become_user: ceph
   when: "'{{ ansible_hostname }}' not in mon_result.stdout"  
 
-- name: Start Ceph mon service
-  command: ceph-mon -i {{ ansible_hostname }} --public-addr {{ ansible_default_ipv4.address }}:6789
-  when: "'{{ ansible_hostname }}' not in mon_result.stdout"  
+# This creates a running monitor on the right ip adress:
+#- name: Start Ceph mon service
+#  command: ceph-mon -i {{ ansible_hostname }} --public-addr {{ ansible_default_ipv4.address }}:6789
+#  when: "'{{ ansible_hostname }}' not in mon_result.stdout"
+#
+# However, if we add:
+#
+# public_network = 10.64.22.162/27
+# to
+# /etc/ceph/ceph.conf
+#
+# systemd can start without running ceph-mon --public-addr at forehand.
+# We will add that one to the common role when we will add the node role to it.
+# Basically, removing ceph-deploy altogether...
 
 - name: Create Systemd service
   service: name="ceph-mon@{{ ansible_hostname }}" state=started enabled=yes
