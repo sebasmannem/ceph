@@ -44,6 +44,10 @@
   script: empty_osd_disk.sh "{{item}}"
   with_items: '{{host_osds.stdout_lines}}'
 
+- name: remove folder
+  file: dest="/var/lib/ceph/osd/ceph-{{item}}" state=absent
+  with_items: '{{host_osds.stdout_lines}}'
+
 - name: Crush
   command: /usr/bin/ceph osd crush remove "osd.{{item}}"
   with_items: '{{host_osds.stdout_lines}}'

@@ -15,11 +15,15 @@ if [ "$PARTS" ]; then
 fi
 
 parted -s $DISK -- 'mklabel gpt mkpart "ceph data" xfs 1 -1'
-mkfs.xfs ${DISK}1
+mkfs.xfs -f ${DISK}1
 
 OSDNUM=$(ceph osd create)
-sudo -u ceph mkdir /var/lib/ceph/osd/ceph-$OSDNUM
-mount ${DISK}1 /var/lib/ceph/osd/ceph-$OSDNUM
+sudo -u ceph mkdir -p /var/lib/ceph/osd/ceph-$OSDNUM
+
+UUID=$(blkid ${DISK}1 -o export | grep -E '^UUID=')
+echo "$UUID     /var/lib/ceph/osd/ceph-$OSDNUM     xfs     defaults     0 0" >> /etc/fstab
+mount /var/lib/ceph/osd/ceph-$OSDNUM
+
 chown ceph:ceph /var/lib/ceph/osd/ceph-$OSDNUM
 
 sudo -u ceph ceph-osd -i $OSDNUM --mkfs --mkkey
