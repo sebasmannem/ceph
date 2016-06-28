@@ -1,0 +1,16 @@
+# This is now one step with a script that does many things.
+# Other possibilities would be:
+# - Do the disk stuff first (in one step), mount the disk as an ODS in a second big step
+# - Do the disk stuff first (in one step), mount the disk as an ODS next, find the ODS numbers that not yet have been configured, do everything else in small steps.
+# - Firstly: Create and register and ODS per empty disk, than do everything in small steps.
+#
+# Last step would be the best. You might do every step idempotent and could let future runs pick up where previous have ended.
+# However, it will cost extra effort, and is disputable how much extra this effort will give back.
+# For now, one big step and enhancements in teh future...
+
+- name: setup disks 
+  script: partition.sh "{{item.key}}"
+  with_dict: "{{ ansible_devices }}" 
+  when: 
+  - item.value.removable == "0" 
+  - item.value.partitions|length == 0 
