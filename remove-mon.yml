@@ -1,0 +1,11 @@
+---
+# Delete a OSD from a CEPH cluster
+
+- hosts:
+  - exMON
+  become: yes
+  become_method: sudo
+  roles:
+  - delete-mon
+
+

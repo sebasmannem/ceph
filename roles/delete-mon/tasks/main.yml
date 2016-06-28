@@ -1,0 +1,8 @@
+- name: stop service
+  service: name="ceph-mon@{{ansible_hostname}}" state=stopped enabled=no
+
+- name: remove monitor from ceph
+  command: ceph mon remove "{{ansible_hostname}}"
+
+- name: remove old mon folder
+  file: dest="/var/lib/ceph/mon/ceph-{{ansible_hostname}}/" state=absent
