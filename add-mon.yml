@@ -1,0 +1,14 @@
+---
+# Add new Monitors to a CEPH cluster
+
+- hosts:
+  - MON
+  
+  become: yes
+  become_method: sudo
+  become_user:  ceph
+  
+  roles:
+  - add-mon
+
+
