@@ -1,0 +1,39 @@
+---
+vars:
+ceph_mon_port = 6789
+ceph_mon_ip = {{{ ansible_ip }}
+mon_id={{ ansibe_hostname }}
+
+- hosts: MON  
+
+- name: Create temp dir
+  register: temp_dir
+  command: mktemp -d
+
+
+
+
+
+
+run ceph cmd voor mon keyring
+run ceph cmd voor map-filename
+
+vraag aan ceph cluster of huidige server al mon is en registreer de status
+
+Test of /var/lib/ceph/mon/ceph-{mon-id} bestaat
+- name: Test if this host is a Ceph monitor
+  stat: path=
+
+zo nee, maak dir
+
+
+run ceph create cmd
+alleen als nog niet geinstalleerd
+
+start ceph mon service
+alleen als nog niet geinstalleerd
+
+- name: Remove temp dir
+  file: name={{ temp_dir.stdout }} state=absent
+
+
