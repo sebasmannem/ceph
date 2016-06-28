@@ -1,14 +1,4 @@
 ---
-- vars:
-  ceph_mon_port = 6789
-  ceph_mon_ip = {{ ansible_ip }}
-  mon_id  = {{ ansibe_hostname }}
-
-  become: true
-  become_user:  ceph
-
-- hosts: MON  
-
 - name: Create temp dir
   register: temp_dir
   command: mktemp -d
