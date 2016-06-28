@@ -17,7 +17,7 @@
 # works, but wait_for_health_ok.sh waits until, for x seconds...
 
 - name: Check before we act
-  debug: msg="In a future version, we might test here hoqw much GB we are detaching and if there is enough free space before we continue. Not yet implemented though."
+  debug: msg="In a future version, we might test here how much GB we are detaching and if there is enough free space before we continue. Not yet implemented though."
 
 - name: Still healthy? If not, lets just break and let people decide why we're in a stable enough situation to continue...
   command: /usr/bin/ceph health

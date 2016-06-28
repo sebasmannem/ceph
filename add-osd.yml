@@ -1,0 +1,12 @@
+---
+# Add a new OSD to a CEPH cluster
+
+- hosts:
+  - OSD
+  become: yes
+  become_method: sudo
+  roles:
+#  - common
+  - add-osd
+
+

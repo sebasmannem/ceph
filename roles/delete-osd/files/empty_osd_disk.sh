@@ -8,6 +8,7 @@ umount "/var/lib/ceph/osd/ceph-$OSDNUM"
 parted $DISK -s -m print | awk 'BEGIN{FS=":"}/^[1-9]/{print $1}' | while read PART; do
   # For every partition: write 1M empty blocks
   dd if=/dev/zero of=$DISK$PART bs=4096 count=256
+  parted -s $DISK rm $PART
 done
 
 # Remove partitiontable (replace by empty one)
