@@ -5,16 +5,12 @@
 
 - name: Fetch Ceph Monitor Keyring
   command: ceph auth get mon. -o mon_keyring_file
-  become: true
-  become_user: root
   args:
     chdir: "{{temp_dir.stdout}}"
 
 
 - name: Fetch Ceph Monitor Mapfile
   command: ceph mon getmap -o mon_map_file
-  become: true
-  become_user: root
   args:
     chdir: "{{temp_dir.stdout}}"
 
@@ -26,26 +22,21 @@
 
 - name: Create Ceph Monitor directory
   file: path="/var/lib/ceph/mon/ceph-{{ ansible_hostname }}" state=directory owner=ceph group=ceph
-  become: true
-  become_user: root
 
 - name: Create Ceph Monitor
   command: ceph-mon -i "{{ ansible_hostname }}" --mkfs --monmap mon_map_file --keyring mon_keyring_file
   args:
     chdir: "{{temp_dir.stdout}}"
+  become: yes
+  become_user: ceph
   when: "'{{ ansible_hostname }}' not in mon_result.stdout"  
 
 - name: Start Ceph mon service
   command: ceph-mon -i {{ ansible_hostname }} --public-addr {{ ansible_default_ipv4.address }}:6789
-  become: true
-  become_user: root
   when: "'{{ ansible_hostname }}' not in mon_result.stdout"  
 
 - name: Create Systemd service
   service: name="ceph-mon@{{ ansible_hostname }}" state=started enabled=yes
-  become: true
-  become_user: root
-
 
 - name: Remove temp dir
   file: name={{ temp_dir.stdout }} state=absent
