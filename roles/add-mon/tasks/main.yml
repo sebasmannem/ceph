@@ -5,38 +5,45 @@
 
 - name: Fetch Ceph Monitor Keyring
   command: ceph auth get mon. -o mon_keyring_file
+  become: true
+  become_user: root
   args:
     chdir: "{{temp_dir.stdout}}"
 
 
 - name: Fetch Ceph Monitor Mapfile
   command: ceph mon getmap -o mon_map_file
+  become: true
+  become_user: root
   args:
     chdir: "{{temp_dir.stdout}}"
 
 - name: Check if node is already a Ceph Monitor
-  command: monmaptool --print mon_map_file | grep $(hostname) 
+  command: monmaptool --print mon_map_file 
   args:
     chdir: "{{temp_dir.stdout}}"
   register: mon_result
 
-- name: Test if this host is a Ceph monitor
-  stat: path=/var/lib/ceph/mon/ceph-{{ ansible_hostname }}
+- name: Test if there is already an Monitor Directory
+  stat: path="/var/lib/ceph/mon/ceph-{{ ansible_hostname }}"
   register: mon_dir
 
 - name: Create Ceph Monitor directory
-  file: path=/var/lib/ceph/mon/ceph-{{ ansible_hostname }} state=directory owner=ceph group=ceph
+  file: path="/var/lib/ceph/mon/ceph-{{ ansible_hostname }}" state=directory owner=ceph group=ceph
   when: mon_dir.stat.isdir == False
 
 - name: Create Ceph Monitor
   command: ceph-mon -i {{ ansible_hostname }} --mkfs --monmap mon_map_file --keyring mon_keyring_file
   args:
     chdir: "{{temp_dir.stdout}}"
-  when: "mon_result.rc != 0"  
+  when: "'{{ ansible_hostname }}' in mon_result.stderr"  
 
-- name: start Ceph mon service
-  command: ceph-mon -i {{ ansibe_hostname }} --public-addr {{ ansible_ip }}:{{ceph_mon_port}}
-  when: "mon_result.rc != 0"  
+- name: Start Ceph mon service
+  command: ceph-mon -i {{ ansible_hostname }} --public-addr {{ ansible_default_ipv4.address }}:6789
+  when: "'{{ ansible_hostname }}' in mon_result.stderr"  
+
+- name: Create Systemd service
+  service: name="ceph-mon@{{ ansible_hostname }}" state=started enabled=yes
 
 - name: Remove temp dir
   file: name={{ temp_dir.stdout }} state=absent
