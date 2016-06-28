@@ -1,8 +1,11 @@
 ---
-vars:
-ceph_mon_port = 6789
-ceph_mon_ip = {{{ ansible_ip }}
-mon_id={{ ansibe_hostname }}
+- vars:
+  ceph_mon_port = 6789
+  ceph_mon_ip = {{ ansible_ip }}
+  mon_id  = {{ ansibe_hostname }}
+
+  become: true
+  become_user:  ceph
 
 - hosts: MON  
 
@@ -10,28 +13,40 @@ mon_id={{ ansibe_hostname }}
   register: temp_dir
   command: mktemp -d
 
+- name: Fetch Ceph Monitor Keyring
+  command: ceph auth get mon. -o mon_keyring_file
+  args:
+    chdir: "{{temp_dir.stdout}}"
 
 
+- name: Fetch Ceph Monitor Mapfile
+  command: ceph mon getmap -o mon_map_file
+  args:
+    chdir: "{{temp_dir.stdout}}"
 
+- name: Check if node is already a Ceph Monitor
+  command: monmaptool --print mon_map_file | grep $(hostname) 
+  args:
+    chdir: "{{temp_dir.stdout}}"
+  register: mon_result
 
-
-run ceph cmd voor mon keyring
-run ceph cmd voor map-filename
-
-vraag aan ceph cluster of huidige server al mon is en registreer de status
-
-Test of /var/lib/ceph/mon/ceph-{mon-id} bestaat
 - name: Test if this host is a Ceph monitor
-  stat: path=
+  stat: path=/var/lib/ceph/mon/ceph-{{ ansible_hostname }}
+  register: mon_dir
 
-zo nee, maak dir
+- name: Create Ceph Monitor directory
+  file: path=/var/lib/ceph/mon/ceph-{{ ansible_hostname }} state=directory owner=ceph group=ceph
+  when: mon_dir.stat.isdir == False
 
+- name: Create Ceph Monitor
+  command: ceph-mon -i {{ ansible_hostname }} --mkfs --monmap mon_map_file --keyring mon_keyring_file
+  args:
+    chdir: "{{temp_dir.stdout}}"
+  when: "mon_result.rc != 0"  
 
-run ceph create cmd
-alleen als nog niet geinstalleerd
-
-start ceph mon service
-alleen als nog niet geinstalleerd
+- name: start Ceph mon service
+  command: ceph-mon -i {{ ansibe_hostname }} --public-addr {{ ansible_ip }}:{{ceph_mon_port}}
+  when: "mon_result.rc != 0"  
 
 - name: Remove temp dir
   file: name={{ temp_dir.stdout }} state=absent
