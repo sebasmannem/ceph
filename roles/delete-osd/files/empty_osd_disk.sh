@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 OSDNUM=$1
-[ "$OSDNUM" -gt 0 ] || exit 1
+[ "$OSDNUM" -ge 0 ] || exit 1
 DISK=$(mount | sed -nr '/\/var\/lib\/ceph\/osd\/ceph-'$OSDNUM'/{s|(/dev/[a-z]+)[0-9]+ on /var/lib/ceph/osd/ceph-[0-9]+ .*|\1|;p}')
 umount "/var/lib/ceph/osd/ceph-$OSDNUM"
 # First: use parted to find partitions
