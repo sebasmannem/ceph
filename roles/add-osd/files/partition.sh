@@ -20,7 +20,7 @@ mkfs.xfs ${DISK}1
 OSDNUM=$(ceph osd create)
 sudo -u ceph mkdir /var/lib/ceph/osd/ceph-$OSDNUM
 mount ${DISK}1 /var/lib/ceph/osd/ceph-$OSDNUM
-chmod ceph:ceph /var/lib/ceph/osd/ceph-$OSDNUM
+chown ceph:ceph /var/lib/ceph/osd/ceph-$OSDNUM
 
 sudo -u ceph ceph-osd -i $OSDNUM --mkfs --mkkey
 
