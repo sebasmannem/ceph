@@ -24,26 +24,28 @@
     chdir: "{{temp_dir.stdout}}"
   register: mon_result
 
-- name: Test if there is already an Monitor Directory
-  stat: path="/var/lib/ceph/mon/ceph-{{ ansible_hostname }}"
-  register: mon_dir
-
 - name: Create Ceph Monitor directory
   file: path="/var/lib/ceph/mon/ceph-{{ ansible_hostname }}" state=directory owner=ceph group=ceph
-  when: mon_dir.stat.isdir == False
+  become: true
+  become_user: root
 
 - name: Create Ceph Monitor
-  command: ceph-mon -i {{ ansible_hostname }} --mkfs --monmap mon_map_file --keyring mon_keyring_file
+  command: ceph-mon -i "{{ ansible_hostname }}" --mkfs --monmap mon_map_file --keyring mon_keyring_file
   args:
     chdir: "{{temp_dir.stdout}}"
-  when: "'{{ ansible_hostname }}' in mon_result.stderr"  
+  when: "'{{ ansible_hostname }}' not in mon_result.stdout"  
 
 - name: Start Ceph mon service
   command: ceph-mon -i {{ ansible_hostname }} --public-addr {{ ansible_default_ipv4.address }}:6789
-  when: "'{{ ansible_hostname }}' in mon_result.stderr"  
+  become: true
+  become_user: root
+  when: "'{{ ansible_hostname }}' not in mon_result.stdout"  
 
 - name: Create Systemd service
   service: name="ceph-mon@{{ ansible_hostname }}" state=started enabled=yes
+  become: true
+  become_user: root
+
 
 - name: Remove temp dir
   file: name={{ temp_dir.stdout }} state=absent
