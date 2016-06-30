@@ -1,6 +1,0 @@
-- name: install libselinux-python (needed for selinux with create repo)
-  yum: state='present' name='libselinux-python'
-- name: yum update
-  yum: state='latest' name='*'
-- name: install ceph-deploy
-  yum: name='ceph-deploy' state='present' update_cache='yes'

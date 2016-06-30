@@ -1,7 +1,0 @@
-- name: install some packages
-  yum: name={{ item }} state=present
-  with_items:
-  - ntp
-  - ntpdate
-  - ntp-doc
-  - iptables-services

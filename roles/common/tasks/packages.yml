@@ -6,7 +6,14 @@
   register: epel_repo
 
 - name: install libselinux-python (needed for selinux with create repo)
-  yum: state='present' name='libselinux-python'
+  yum: name={{ item }} state=present
+  with_items:
+  - ntp
+  - ntpdate
+  - ntp-doc
+  - iptables-services
+  - libselinux-python
+
 - name: Config repo
   copy: src=ceph.repo dest=/etc/yum.repos.d/ceph.repo owner=root group=root mode=0644
   register: ceph_repo
