@@ -1,0 +1,13 @@
+- name: Config repo
+  copy: src=ceph.repo dest=/etc/yum.repos.d/ceph.repo owner=root group=root mode=0644
+  register: ceph_repo
+
+- name: yum update
+  yum: state='latest' name='*'
+  when: ceph_repo|changed
+
+- name: install some packages that are needed for ceph
+  yum: name={{ item }} state=present
+  with_items:
+  - ceph
+  - ceph-radosgw

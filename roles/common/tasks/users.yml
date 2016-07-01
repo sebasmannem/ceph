@@ -4,7 +4,6 @@
   copy: src='ceph.sudo' dest='/etc/sudoers.d/ceph' owner='root' group='root' mode=0440
 - name: create authorized_keys
   file: state=touch dest=/home/ceph/.ssh/authorized_keys owner=ceph group=ceph mode=600
-- name: add deploy keys to authorized_keys
-  lineinfile: dest=/home/ceph/.ssh/authorized_keys line="{{ item }}"
-  with_items: "{{ hostvars['localhost']['id_rsa_pubs']['stdout_lines'] }}"
-  ignore_errors: yes
+- name: set authorized_keys
+  authorized_key: user=ceph key="{{ lookup('file', '~/.ssh/id_rsa.pub') }}" 
+
