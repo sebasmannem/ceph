@@ -17,6 +17,7 @@
   rpm_key: state=present key=/etc/pki/rpm-gpg/RPM-GPG-KEY-puppetlabs-PC1
 
 - name: install packages
-  yum: name={{item}} state=installed
-  with_items:
-      - puppet-agent
+  yum: name=puppet-agent state=installed
+
+- name: start puppet service
+  service: name=puppet state=started enabled=yes
