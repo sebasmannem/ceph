@@ -1,4 +1,36 @@
 ---
+# This is to find an/or generate fsid
+- hosts: localhost
+  tasks:
+  - name: make tempfolder
+    command: mktemp -d
+    register: mktemp
+
+- hosts: MON
+  tasks:
+  - name: get ceph.conf files
+    fetch: dest="{{hostvars['localhost'].mktemp.stdout}}/" src="/etc/ceph/ceph.conf"
+
+- hosts: localhost
+  tasks:
+  - name: find fsids
+    script: scripts/getCephFSID.py "{{mktemp.stdout}}"
+    register: cluster_fsid
+    changed_when: cluster_fsid.rc == 1
+    failed_when: cluster_fsid.rc > 1
+  - name: print fsid
+    debug: var=cluster_fsid.stdout
+  - name: generate new fsid when needed
+    command: uuidgen
+    register: uuidgen
+    when: cluster_fsid.rc == 0
+  - name: set fsid fact
+    set_fact: fsid="{% if cluster_fsid.rc == 0 %}{{ uuidgen.stdout }}{% else %}{{ cluster_fsid.stdout }}{% endif %}"
+  - name: print fsid
+    debug: msg="{{fsid}}"
+# This was to find an/or generate fsid
+
+
 - hosts:
   - all
   become: yes

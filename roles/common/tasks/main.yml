@@ -5,5 +5,5 @@
 - include: firewall.yml
 - include: tty.yml
 - include: selinux.yml
-- include: ceph.yml
-
+- include: cephpackages.yml
+#- include: cephconfig.yml
