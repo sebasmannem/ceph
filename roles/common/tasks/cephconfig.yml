@@ -1,0 +1,3 @@
+- name: template ceph.conf
+  template: name=ceph.conf dest=/etc/ceph/ceph.conf
+

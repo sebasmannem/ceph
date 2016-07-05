@@ -1,5 +1,5 @@
 ---
-# This is to find an/or generate fsid
+# This is to find an/or generate fsid and keyring
 - hosts: localhost
   tasks:
   - name: make tempfolder
@@ -8,27 +8,50 @@
 
 - hosts: MON
   tasks:
-  - name: get ceph.conf files
-    fetch: dest="{{hostvars['localhost'].mktemp.stdout}}/" src="/etc/ceph/ceph.conf"
+  - name: get conf files
+    fetch: dest="{{hostvars['localhost'].mktemp.stdout}}/" src="{{ item }}"
+    with_items:
+    - /etc/ceph/ceph.conf
+    - /etc/ceph/ceph.client.admin.keyring
 
 - hosts: localhost
   tasks:
-  - name: find fsids
-    script: scripts/getCephFSID.py "{{mktemp.stdout}}"
+  - name: find fsid
+    script: scripts/getConf.py -f ceph.conf -c global -k fsid "{{ mktemp.stdout }}"
     register: cluster_fsid
     changed_when: cluster_fsid.rc == 1
     failed_when: cluster_fsid.rc > 1
-  - name: print fsid
-    debug: var=cluster_fsid.stdout
   - name: generate new fsid when needed
     command: uuidgen
     register: uuidgen
     when: cluster_fsid.rc == 0
   - name: set fsid fact
     set_fact: fsid="{% if cluster_fsid.rc == 0 %}{{ uuidgen.stdout }}{% else %}{{ cluster_fsid.stdout }}{% endif %}"
-  - name: print fsid
-    debug: msg="{{fsid}}"
-# This was to find an/or generate fsid
+
+  - name: find keyring
+    script: scripts/getConf.py -f ceph.client.admin.keyring -c client.admin -k key "{{ mktemp.stdout }}"
+    register: cluster_keyring
+    changed_when: cluster_keyring.rc == 1
+    failed_when: cluster_keyring.rc > 1
+
+- hosts: MON[0]
+  tasks:
+  - name: Generate an administrator keyring, generate a client.admin user and add the user to the keyring.
+    command: ceph-authtool --create-keyring /etc/ceph/ceph.client.admin.keyring --gen-key -n client.admin --set-uid=0 --cap mon 'allow *' --cap osd 'allow *' --cap mds 'allow'
+    when: cluster_keyring.rc == 0
+  - name: get keyring conf
+    fetch: dest="{{hostvars['localhost'].mktemp.stdout}}/" src="/etc/ceph/ceph.client.admin.keyring"
+
+- hosts: localhost
+  tasks:
+  - name: find keyring
+    script: scripts/getConf.py -f ceph.client.admin.keyring -c client.admin -k key "{{ mktemp.stdout }}"
+    register: cluster_keyring
+    changed_when: cluster_keyring.rc == 1
+    failed_when: cluster_keyring.rc > 1
+  #You can find the at: "{{hostvars['localhost'].cluster_keyring.stdout}}"
+
+# This was to find an/or generate fsid and keyring
 
 
 - hosts:
