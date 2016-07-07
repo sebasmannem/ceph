@@ -3,6 +3,9 @@
 - hosts:
   - localhost
   tasks:
+  - name: check for number of monitors (Should be only one for new_cluster.yml)
+    debug: msg="Number of monitors ({{ groups['MON'] | length }}) should be 1"
+    failed_when: groups['MON'] | length != 1
   - name: make tempfolder
     command: mktemp -d
     register: mktemp
