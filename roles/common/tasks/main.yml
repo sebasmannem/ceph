@@ -6,4 +6,4 @@
 - include: tty.yml
 - include: selinux.yml
 - include: cephpackages.yml
-#- include: cephconfig.yml
+- include: cephconfig.yml

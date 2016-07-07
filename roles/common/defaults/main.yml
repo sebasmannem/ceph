@@ -1,8 +1,8 @@
 #Public network (client - ceph). ansible will detect interface to use.
-public_nw: 192.168.2.0/24
+public_nw: 10.64.22.128/27
 
 #Cluster network (ceph - ceph). ansible will detect interface to use.
-cluster_nw: 192.168.122.0/24
+cluster_nw: 10.64.22.160/27
 
 #Port for ceph monitor proces
 monitor_port: 6789
@@ -14,3 +14,21 @@ rgw_port: 7480
 osd_start_port: 6800
 osd_end_port: 7300
 
+osd_journal_size: 1000
+
+# Write an object n times.
+osd_pool_default_size: 3
+
+# Allow writing n copy in a degraded state.
+osd_pool_default_min_size: 2
+
+#Less than 5 OSDs set pg_num to 128
+#Between 5 and 10 OSDs set pg_num to 512
+#Between 10 and 50 OSDs set pg_num to 4096
+#If you have more than 50 OSDs, you need to understand the tradeoffs and how to calculate the pg_num value by yourself
+osd_pool_default_pg_num: 512
+osd_pool_default_pgp_num: "{{ osd_pool_default_pg_num }}"
+
+#Description: The bucket type to use for chooseleaf in a CRUSH rule. Uses ordinal rank rather than name.
+#Default:     1. Typically a host containing one or more Ceph OSD Daemons.
+osd_crush_chooseleaf_type: 1
