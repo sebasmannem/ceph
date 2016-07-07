@@ -34,40 +34,82 @@
     register: admin_keyring
     any_errors_fatal: true
 
+
 # This was to detect that no fsid and keyring are set
+
+#- hosts:
+#  - all
+#  tasks:
+#  roles:
+#  - common
+
+- hosts:
+  - MON[0]
+  become: yes
+  become_user: root
+  tasks:
+  - name: Clean all clutter from previous runs
+    file: state=absent dest="{{ item }}"
+    with_items:
+    - /tmp/monmap
+    - /tmp/ceph.mon.keyring
+  - name: generate new fsid
+    command: uuidgen
+    register: cluster_fsid
+  - name: Create a keyring for your cluster and generate a monitor secret key.
+    command: ceph-authtool --create-keyring /tmp/ceph.mon.keyring --gen-key -n mon. --cap mon 'allow *'
+    become_user: ceph
+  - name: Generate an administrator keyring, generate a client.admin user and add the user to the keyring.
+    command: ceph-authtool --create-keyring /etc/ceph/ceph.client.admin.keyring --gen-key -n client.admin --set-uid=0 --cap mon 'allow *' --cap osd 'allow *' --cap mds 'allow'
+  - name: get keyring
+    script: scripts/getConf.py -f ceph.client.admin.keyring -c client.admin -k key /etc/ceph
+    register: admin_keyring
+    failed_when: admin_keyring.rc != 1
+  - name: set ownership on file correctly
+    file: path=/etc/ceph/ceph.client.admin.keyring mode=644
+  - name: Add the client.admin key to the ceph.mon.keyring
+    command: ceph-authtool /tmp/ceph.mon.keyring --import-keyring /etc/ceph/ceph.client.admin.keyring
+    become_user: ceph
+  - name: Generate a monitor map using the hostname(s), host IP address(es) and the FSID. Save it as /tmp/monmap
+    command: monmaptool --create --add "{{ ansible_hostname }}" "{{ ansible_default_ipv4.address }}" --fsid "{{ cluster_fsid.stdout }}" /tmp/monmap
+    become_user: ceph
+  - name: Create a default data directory (or directories) on the monitor host(s)
+    file: path="/var/lib/ceph/mon/{{ cluster_name }}-{{ ansible_hostname }}" state=directory owner=ceph group=ceph
+  - name: Populate the monitor daemon(s) with the monitor map and keyring
+    command: ceph-mon --cluster "{{ cluster_name }}" --mkfs -i "{{ ansible_hostname }}" --monmap /tmp/monmap --keyring /tmp/ceph.mon.keyring
+    become_user: ceph
+  - name: Touch the done file
+    file: path="/var/lib/ceph/mon/{{ cluster_name }}-{{ ansible_hostname }}/done" state=touch owner=ceph group=ceph
+
+- hosts:
+  - all
+  roles:
+  - { role: ceph-config, keyring: "{{hostvars[groups['MON'][0]].admin_keyring.stdout }}", fsid: "{{ hostvars[groups['MON'][0]].cluster_fsid.stdout }}" }
 
 - hosts:
   - MON[0]
   tasks:
-  - name: generate new fsid when needed
-    command: uuidgen
-    register: cluster_fsid
-  - name: Generate an administrator keyring, generate a client.admin user and add the user to the keyring.
-    command: ceph-authtool --create-keyring /etc/ceph/ceph.client.admin.keyring --gen-key -n client.admin --set-uid=0 --cap mon 'allow *' --cap osd 'allow *' --cap mds 'allow'
-  - name: get keyring
-    script: scripts/getConf.py -f ceph.client.admin.keyring -c client.admin -k key "{{ hostvars['localhost'].mktemp.stdout }}"
-    register: admin_keyring
-
-# This was to find an/or generate fsid and keyring
+  - name: Create Systemd service
+    service: name="ceph-mon@{{ ansible_hostname }}" state=started enabled=yes
 
 
-- hosts:
-  - all
-  become: yes
-  become_method: sudo
-  roles:
-  - { role: common, keyring: "{{hostvars[groups['MON'][0]].admin_keyring.stdout }}", fsid: "{{ hostvars[groups['MON'][0]].cluster_fsid.stdout }}" }
+#- hosts:
+#  - MON
+#  become: yes
+#  become_method: sudo
+#  roles:
+#  - add-mon
 
-- hosts:
-  - MON
-  become: yes
-  become_method: sudo
-  roles:
-  - add-mon
+#- hosts:
+#  - OSD
+#  become: yes
+#  become_method: sudo
+#  roles:
+#  - add-osd
 
 - hosts:
-  - OSD
-  become: yes
-  become_method: sudo
-  roles:
-  - add-osd
+  - localhost
+  tasks:
+  - name: remove tempfolder
+    file: dest="{{ mktemp.stdout }}" state=absent
+

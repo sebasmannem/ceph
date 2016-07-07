@@ -3,7 +3,7 @@
 - name: find interfaces
   shell: ip route get {{item}} | sed -n '/dev/{s/.* dev //;s/ .*//;p}'
   with_items:
-  - "{{public_nw}}"
+  - "{{client_nw}}"
   - "{{cluster_nw}}"
   register: ifaces
 - name: configure iptables

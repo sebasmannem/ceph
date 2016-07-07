@@ -1,5 +1,5 @@
 - name: template ceph.conf
-  template: src="{{ item }}" dest=/etc/ceph/ owner=ceph group=ceph mode=644
+  template: src="{{ item }}" dest=/etc/ceph/ owner=root group=root mode=644
   with_items:
   - ceph.conf
   - ceph.client.admin.keyring

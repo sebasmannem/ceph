@@ -1,5 +1,13 @@
-#Public network (client - ceph). ansible will detect interface to use.
-public_nw: 10.64.22.128/27
+cluster_name: ceph
+
+#cleanout any old config.
+#be afraid, be very afraid. Because setting this option to yes will break things on existing clusters.
+# And it should not be needed to use it on new clusters.
+cleanup_old_config: no
+
+client_nw: 10.64.22.128/27
+#Public network (client - ceph, where ceph listens on). ansible will detect interface to use.
+public_nw: 10.64.22.160/27
 
 #Cluster network (ceph - ceph). ansible will detect interface to use.
 cluster_nw: 10.64.22.160/27
