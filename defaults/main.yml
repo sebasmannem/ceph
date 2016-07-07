@@ -1,0 +1,4 @@
+#cleanout any old config.
+#be afraid, be very afraid. Because setting this option to yes will break things on existing clusters.
+# And it should not be needed to use it on new clusters.
+cleanup_old_config = no
