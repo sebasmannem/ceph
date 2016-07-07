@@ -37,14 +37,14 @@
 
 # This was to detect that no fsid and keyring are set
 
-#- hosts:
-#  - all
-#  tasks:
-#  roles:
-#  - common
+- hosts:
+  - all
+  tasks:
+  roles:
+  - common
 
 - hosts:
-  - MON[0]
+  - MON
   become: yes
   become_user: root
   tasks:
@@ -87,25 +87,17 @@
   - { role: ceph-config, keyring: "{{hostvars[groups['MON'][0]].admin_keyring.stdout }}", fsid: "{{ hostvars[groups['MON'][0]].cluster_fsid.stdout }}" }
 
 - hosts:
-  - MON[0]
+  - MON
   tasks:
   - name: Create Systemd service
     service: name="ceph-mon@{{ ansible_hostname }}" state=started enabled=yes
 
-
-#- hosts:
-#  - MON
-#  become: yes
-#  become_method: sudo
-#  roles:
-#  - add-mon
-
-#- hosts:
-#  - OSD
-#  become: yes
-#  become_method: sudo
-#  roles:
-#  - add-osd
+- hosts:
+  - OSD
+  become: yes
+  become_method: sudo
+  roles:
+  - add-osd
 
 - hosts:
   - localhost
