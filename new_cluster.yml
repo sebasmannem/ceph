@@ -56,7 +56,7 @@
   become: yes
   become_method: sudo
   roles:
-  - { role: common, keyring: " {{hostvars[MON[0]].admin_keyring.stdout }}", fsid: "{{ hostvars[MON[0]].cluster_fsid.stdout }}" }
+  - { role: common, keyring: "{{hostvars[groups['MON'][0]].admin_keyring.stdout }}", fsid: "{{ hostvars[groups['MON'][0]].cluster_fsid.stdout }}" }
 
 - hosts:
   - MON
