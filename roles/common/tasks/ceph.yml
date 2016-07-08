@@ -11,3 +11,6 @@
   with_items:
   - ceph
   - ceph-radosgw
+
+- name: create ceph folder (if it doesnt already exist)
+  file: dest=/var/lib/ceph/ owner=ceph group=ceph state=directory
