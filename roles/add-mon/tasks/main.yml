@@ -10,11 +10,6 @@
   args:
     chdir: "{{temp_dir.stdout}}"
 
-# We should add:
-# public_network = 10.64.22.162/27
-# to
-# /etc/ceph/ceph.conf
-
 - name: Fetch Ceph Monitor Mapfile
   command: ceph mon getmap -o mon_map_file
   args:

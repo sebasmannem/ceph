@@ -3,59 +3,61 @@
 - hosts:
   - localhost
   tasks:
-  - name: check for number of monitors (Should be only one for new_cluster.yml)
-    debug: msg="Number of monitors ({{ groups['MON'] | length }}) should be 1"
-    failed_when: groups['MON'] | length != 1
   - name: make tempfolder
     command: mktemp -d
     register: mktemp
 
 - hosts:
   - all
+  vars:
+    tmpdir: "{{hostvars['localhost'].mktemp.stdout}}"
   tasks:
+  - name: Remove old monitoring service
+    service: name="ceph-mon@{{ ansible_hostname }}" state=stopped enabled=no
+    when: cleanup_old_config|bool
   - name: cleanout old config
     file: name="{{ item }}" state=absent
-    when: cleanup_old_config|bool
     with_items:
     - /etc/ceph/ceph.conf
     - /etc/ceph/ceph.client.admin.keyring
+    when: cleanup_old_config|bool
+  - name: Clean all clutter from previous runs
+    file: state=absent dest="{{ item }}"
+    with_items:
+    - /tmp/monmap
+    - /tmp/ceph.mon.keyring
+    - "/var/lib/ceph/mon/{{ cluster_name }}-{{ ansible_hostname }}"
+    when: cleanup_old_config|bool
   - name: get conf files
-    fetch: dest="{{hostvars['localhost'].mktemp.stdout}}/" src="{{ item }}"
+    fetch: dest="{{ tmpdir }}/" src="{{ item }}"
     with_items:
     - /etc/ceph/ceph.conf
     - /etc/ceph/ceph.client.admin.keyring
 
-- hosts:
-  - localhost
+- hosts: localhost
+  vars:
+    tmpdir: "{{hostvars['localhost'].mktemp.stdout}}"
   tasks:
   - name: find fsid
-    script: scripts/getConf.py -f ceph.conf -c global -k fsid "{{ mktemp.stdout }}"
+    script: scripts/getConf.py -f ceph.conf -c global -k fsid "{{ tmpdir }}"
     register: global_fsid
     any_errors_fatal: true
   - name: find keyring
-    script: scripts/getConf.py -f ceph.client.admin.keyring -c client.admin -k key "{{ mktemp.stdout }}"
+    script: scripts/getConf.py -f ceph.client.admin.keyring -c client.admin -k key "{{ tmpdir }}"
     register: admin_keyring
     any_errors_fatal: true
 
 
 # This was to detect that no fsid and keyring are set
 
-- hosts:
-  - all
-  tasks:
+- hosts: all
   roles:
   - common
 
-- hosts:
-  - MON
+- hosts: MON[0]
   become: yes
   become_user: root
   tasks:
-  - name: Clean all clutter from previous runs
-    file: state=absent dest="{{ item }}"
-    with_items:
-    - /tmp/monmap
-    - /tmp/ceph.mon.keyring
   - name: generate new fsid
     command: uuidgen
     register: cluster_fsid
@@ -84,26 +86,41 @@
   - name: Touch the done file
     file: path="/var/lib/ceph/mon/{{ cluster_name }}-{{ ansible_hostname }}/done" state=touch owner=ceph group=ceph
 
-- hosts:
-  - all
+- hosts: all
+  vars:
+    monitors:
+    - "{{ groups['MON'][0] }}"
+    keyring: "{{ hostvars[groups['MON'][0]].admin_keyring.stdout }}"
+    fsid: "{{ hostvars[groups['MON'][0]].cluster_fsid.stdout }}"
   roles:
-  - { role: ceph-config, keyring: "{{hostvars[groups['MON'][0]].admin_keyring.stdout }}", fsid: "{{ hostvars[groups['MON'][0]].cluster_fsid.stdout }}" }
+  - ceph-config
 
-- hosts:
-  - MON
+- hosts: MON[0]
   tasks:
   - name: Create Systemd service
     service: name="ceph-mon@{{ ansible_hostname }}" state=started enabled=yes
 
-- hosts:
-  - OSD
+- hosts: MON
+  become: yes
+  become_method: sudo
+  roles:
+  - add-mon
+
+- hosts: all
+  vars:
+    monitors: groups['MON']
+    keyring: "{{ hostvars[groups['MON'][0]].admin_keyring.stdout }}"
+    fsid: "{{ hostvars[groups['MON'][0]].cluster_fsid.stdout }}"
+  roles:
+  - ceph-config
+
+- hosts: OSD
   become: yes
   become_method: sudo
   roles:
   - add-osd
 
-- hosts:
-  - localhost
+- hosts: localhost
   tasks:
   - name: remove tempfolder
     file: dest="{{ mktemp.stdout }}" state=absent
