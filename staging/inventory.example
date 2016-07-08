@@ -3,17 +3,13 @@
 ceph-osd[01:10]
 
 [MON]
-# to be deployed Monitors
-# Please start with only one for the new_cluster.yml to succeed.
-# After createing a new cluster, you can add extra monitors by adding them here and running update_cluster.yml
-ceph-mon1
-#ceph-mon[1:3]
+ceph-mon[1:3]
 
 [exOSD]
-ceph-osd[99]
+ceph-osd99
 
 [exMON]
-ceph-mon[9]
+ceph-mon9
 
 [CEPH:children]
 OSD
