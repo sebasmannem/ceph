@@ -10,6 +10,7 @@
 - name: Check OSD's on this host.
   script: osds_on_this_host.sh
   register: host_osds
+  failed_when: host_osds.rc == 2
 
 - name: Check the health of the CEPH cluster.
   script: wait_for_health_ok.sh 60
@@ -36,29 +37,52 @@
   script: wait_for_health_ok.sh 300
   retries: 12
 
+- name: find services
+  script: ceph_services.sh
+  register: ceph_services
+  failed_when: host_osds.rc == 2
+
 - name: stop service
-  service: name="ceph-osd@{{item}}" state=stopped enabled=no
-  with_items: '{{host_osds.stdout_lines}}'
+  service: name="{{ item }}" state=stopped enabled=no
+  with_items: '{{ ceph_services.stdout_lines }}'
+
+- name: osd folders
+  shell: "ls -d /var/lib/ceph/osd/{{ cluster_name }}-*"
+  register: osd_folders
+  ignore_errors: yes
+
+- name: umount osd folders
+  shell: "umount {{ item }}"
+  with_items: "{{ osd_folders.stdout_lines }}"
+  ignore_errors: yes
+
+- name: remove line from fstab
+  script: clean_fstab.sh "{{ item }}"
+  with_items: "{{ osd_folders.stdout_lines }}"
+
+- name: find ceph data partitions
+  script: ceph_data_partitions.py
+  register: ceph_data_partitions
 
 - name: empty osd disk
   script: empty_osd_disk.sh "{{item}}"
-  with_items: '{{host_osds.stdout_lines}}'
+  with_items: '{{ ceph_data_partitions.stdout_lines }}'
 
 - name: remove folder
-  file: dest="/var/lib/ceph/osd/ceph-{{item}}" state=absent
-  with_items: '{{host_osds.stdout_lines}}'
+  file: dest="{{ item }}" state=absent
+  with_items: '{{ osd_folders.stdout_lines }}'
 
 - name: Crush
-  command: /usr/bin/ceph osd crush remove "osd.{{item}}"
-  with_items: '{{host_osds.stdout_lines}}'
+  command: /usr/bin/ceph osd crush remove "{{ item }}"
+  with_items: '{{ host_osds.stdout_lines }}'
 
 - name: Remove Authkey
   command: /usr/bin/ceph auth del "osd.{{item}}"
-  with_items: '{{host_osds.stdout_lines}}'
+  with_items: '{{ host_osds.stdout_lines }}'
 
 - name: Remove OSD
   command: /usr/bin/ceph osd rm "{{item}}"
-  with_items: '{{host_osds.stdout_lines}}'
+  with_items: '{{ host_osds.stdout_lines }}'
 
 - name: update master ceph.conf
   debug: msg="In our tests there was no master ceph.conf file to be identified. Furthermore we don't add keys there either. Skipping for now..."

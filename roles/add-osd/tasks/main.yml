@@ -1,16 +1,58 @@
-# This is now one step with a script that does many things.
-# Other possibilities would be:
-# - Do the disk stuff first (in one step), mount the disk as an ODS in a second big step
-# - Do the disk stuff first (in one step), mount the disk as an ODS next, find the ODS numbers that not yet have been configured, do everything else in small steps.
-# - Firstly: Create and register and ODS per empty disk, than do everything in small steps.
-#
-# Last step would be the best. You might do every step idempotent and could let future runs pick up where previous have ended.
-# However, it will cost extra effort, and is disputable how much extra this effort will give back.
-# For now, one big step and enhancements in teh future...
-
 - name: setup disks 
-  script: partition.sh "{{item.key}}"
+  command: parted -s "/dev/{{ item.key }}" -- 'mklabel gpt mkpart "ceph data" xfs 1 -1'
   with_dict: "{{ ansible_devices }}" 
   when: 
   - item.value.removable == "0" 
-  - item.value.partitions|length == 0 
+  - item.value.partitions|length == 0
+
+- name: find ceph partitions without xfs
+  script: ceph_data_partitions_withoutXFS.py
+  register: ceph_parts
+
+- name: create xfs partitions
+  filesystem: fstype=xfs dev="{{ item }}"
+  with_items: "{{ ceph_parts.stdout_lines }}"
+
+- name: find ceph filesystems not yet in fstab
+  script: ceph_data_partitions_not_yet_in_fstab.py
+  register: ceph_fss
+
+- name: get osd num
+  shell: ceph osd create
+  with_items: "{{ ceph_fss.stdout_lines }}"
+  register: osdnums
+
+- name: mount new osds
+  mount: name="/var/lib/ceph/osd/{{ cluster_name }}-{{ item.stdout }}/" src="{{ item.item }}" fstype=xfs state=mounted
+  with_items: "{{ osdnums.results }}"
+
+- name: find osd folders
+  script: osds_by_folder.sh "/var/lib/ceph/osd/{{ cluster_name }}-"
+  register: osds_by_folder
+
+- name: check that the filesystems are correctly mounted
+  script: check_osdnums_of_mounted_ceph_disks.sh "{{ cluster_name }}" "{{ item }}"
+  with_items: "{{ osds_by_folder.stdout_lines }}"
+
+- name: change ownership for new filesystems root dirs
+  file: path="/var/lib/ceph/osd/{{ cluster_name }}-{{ item }}/" owner=ceph group=ceph state=directory
+  with_items: "{{ osds_by_folder.stdout_lines }}"
+
+- name: make osd structure inside osd fs
+  command: ceph-osd -i "{{ item }}" --mkfs --mkkey
+  args:
+    creates: "/var/lib/ceph/osd/ceph-{{ item }}/ready"
+  with_items: "{{ osds_by_folder.stdout_lines }}"
+  become_user: ceph
+
+- name: add osd auth to cluster
+  command: ceph auth add "osd.{{ item }}" osd 'allow *' mon 'allow rwx' -i "/var/lib/ceph/osd/{{ cluster_name }}-{{ item }}/keyring"
+  with_items: "{{ osds_by_folder.stdout_lines }}"
+  
+- name: add osd to cluster
+  command: ceph osd crush add "osd.{{ item }}" 1.0 host="{{ ansible_hostname }}"
+  with_items: "{{ osds_by_folder.stdout_lines }}"
+
+- name: create and enable service
+  service: name="ceph-osd@{{ item }}" state=started enabled=yes
+  with_items: "{{ osds_by_folder.stdout_lines }}"
