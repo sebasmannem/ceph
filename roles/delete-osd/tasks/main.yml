@@ -87,6 +87,9 @@
 - name: update master ceph.conf
   debug: msg="In our tests there was no master ceph.conf file to be identified. Furthermore we don't add keys there either. Skipping for now..."
 
+- name: update master ceph.conf
+  debug: msg="Somehow, something goes terribly wrong after removal and before reboot if you add again. partitioning disk creates folder in /var/lib/ceph/osd/ceph-#/. Please reboot before using add again."
+
 #- name: Check the status of the CEPH cluster.
 #  command: ceph status
 
