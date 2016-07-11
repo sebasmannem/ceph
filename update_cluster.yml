@@ -1,0 +1,77 @@
+---
+
+# This is to find an/or generate fsid and keyring
+- hosts: localhost
+  tasks:
+  - name: make tempfolder
+    command: mktemp -d
+    register: mktemp
+
+- hosts: all
+  tasks:
+  - name: get conf files
+    fetch: dest="{{hostvars['localhost'].mktemp.stdout}}/" src="{{ item }}"
+    with_items:
+    - /etc/ceph/ceph.conf
+    - /etc/ceph/ceph.client.admin.keyring
+
+- hosts: localhost
+  tasks:
+  - name: find fsid
+    script: scripts/getConf.py -f ceph.conf -c global -k fsid "{{ mktemp.stdout }}"
+    register: cluster_fsid
+    changed_when: cluster_fsid.rc == 1
+    failed_when: cluster_fsid.rc > 1
+  - name: generate new fsid when needed
+    command: uuidgen
+    register: uuidgen
+    when: cluster_fsid.rc == 0
+  - name: set fsid fact
+    set_fact: fsid="{% if cluster_fsid.rc == 0 %}{{ uuidgen.stdout }}{% else %}{{ cluster_fsid.stdout }}{% endif %}"
+
+  - name: find keyring
+    script: scripts/getConf.py -f ceph.client.admin.keyring -c client.admin -k key "{{ mktemp.stdout }}"
+    register: cluster_keyring
+    changed_when: cluster_keyring.rc == 1
+    failed_when: cluster_keyring.rc > 1
+    #You can find the at: "{{hostvars['localhost'].cluster_keyring.stdout}}"
+
+  - name: remove tempfolder
+    file: dest="{{ mktemp.stdout }}" state=absent
+
+# This was to find an/or generate fsid and keyring
+
+- hosts: all
+  become: yes
+  become_method: sudo
+  vars:
+    keyring: "{{hostvars['localhost'].cluster_keyring.stdout}}"
+    fsid: "{{ hostvars['localhost'].fsid }}"
+    monitors: "{{groups['MON']}}"
+  roles:
+  - common
+  - ceph-config
+
+- hosts: MON
+  become: yes
+  become_method: sudo
+  roles:
+  - add-mon
+
+- hosts: OSD
+  become: yes
+  become_method: sudo
+  roles:
+  - add-osd
+
+- hosts: exMON
+  become: yes
+  become_method: sudo
+  roles:
+  - delete-mon
+
+- hosts: exOSD
+  become: yes
+  become_method: sudo
+  roles:
+  - delete-osd
