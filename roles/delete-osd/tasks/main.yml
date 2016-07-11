@@ -77,11 +77,11 @@
   with_items: '{{ host_osds.stdout_lines }}'
 
 - name: Remove Authkey
-  command: /usr/bin/ceph auth del "osd.{{item}}"
+  command: /usr/bin/ceph auth del "{{ item }}"
   with_items: '{{ host_osds.stdout_lines }}'
 
 - name: Remove OSD
-  command: /usr/bin/ceph osd rm "{{item}}"
+  command: /usr/bin/ceph osd rm "{{ item }}"
   with_items: '{{ host_osds.stdout_lines }}'
 
 - name: update master ceph.conf
