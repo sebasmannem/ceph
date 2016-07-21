@@ -1,0 +1,13 @@
+- name: Install EPEL repo
+  yum:
+    name: epel-release
+    state: present
+  when: ansible_distribution == "CentOS"
+  register: epel_repo
+
+- name: yum update
+  yum: state='latest' name='*'
+  when: epel_repo|changed
+
+- name: install iptables-services package
+  yum: name=iptables-services state=present

@@ -1,3 +1,17 @@
+- name: Install EPEL repo
+  yum:
+    name: epel-release
+    state: present
+  when: ansible_distribution == "CentOS"
+  register: epel_repo
+
+- name: yum update
+  yum: state='latest' name='*'
+  when: epel_repo|changed
+
+- name: install libselinux-python (needed for selinux with create repo)
+  yum: name=libselinux-python state=present
+
 - name: plaats Puppet repo file
   copy: src=puppetlabs.repo dest=/etc/yum.repos.d/puppetlabs-pc1.repo mode=644 owner=root group=root force=yes
   register: puppet_repo
