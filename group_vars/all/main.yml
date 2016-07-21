@@ -20,7 +20,7 @@ ntp_hosts:
 dns_hosts:
 - 10.64.22.189
 
-http_proxy: http://10.64.225.10:8080
+proxy_server: "http://10.64.225.10:8080"
 
 #Port for ceph monitor proces
 monitor_port: 6789

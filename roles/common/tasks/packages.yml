@@ -1,0 +1,2 @@
+- name: install libselinux-python (needed for selinux with ansible)
+  yum: name=libselinux-python state=present

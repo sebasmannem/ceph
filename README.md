@@ -12,5 +12,3 @@ thing to do before using this ansible project:
 Please be aware that this playbook has been developed using ansible 2.1.0.0.
 
 At this moment I am extending this project to add a openstack mitaka deployment.
-And at this moment we are still having some puppet master doing stuff with finishing the servers.
-I will change that to ansible playbook stuff too, so that this is an atomic end-to-end deployment.
