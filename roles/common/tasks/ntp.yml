@@ -16,5 +16,5 @@
 - name: enable ntpd service
   service: name=ntpd enabled=yes state=started
 
-- name: wait 60 times 1000ms for ntp to be correct within 100ms
-  script: wait_ntp.py -n 100 -c 60 -d 1000
+- name: wait 60 times 10000ms for ntp to be correct within 300ms
+  script: wait_ntp.py -n 300 -c 60 -d 10000
