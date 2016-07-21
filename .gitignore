@@ -1,4 +1,5 @@
 *.pyc
+*test*
 /*.retry
 staging/*
 !staging/inventory.example
