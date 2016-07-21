@@ -5,12 +5,13 @@ ceph_cluster_name: ceph
 # And it should not be needed to use it on new clusters.
 cleanup_old_config: no
 
-client_nw: 10.64.22.128/27
+ceph_client_nw: 10.64.22.128/27
+
 #Public network (client - ceph, where ceph listens on). ansible will detect interface to use.
-public_nw: 10.64.22.160/27
+ceph_public_nw: 10.64.22.160/27
 
 #Cluster network (ceph - ceph). ansible will detect interface to use.
-cluster_nw: 10.64.22.160/27
+ceph_cluster_nw: 10.64.22.160/27
 
 #Port for ceph monitor proces
 monitor_port: 6789
