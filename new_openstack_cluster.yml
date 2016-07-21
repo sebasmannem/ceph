@@ -1,0 +1,23 @@
+# This first step is important for 2 things:
+# 1: gather facts of all hosts
+# 2: apply all common stuff to all nodes
+- hosts: all
+  roles:
+  - common
+
+- hosts: controllers
+  roles:
+  - controller
+
+- hosts: compute
+  roles:
+  - compute
+
+- hosts: block
+  roles:
+  - block
+
+- hosts: object
+  roles:
+  - object
+

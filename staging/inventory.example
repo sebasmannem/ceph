@@ -14,3 +14,13 @@ ceph-mon9
 [CEPH:children]
 OSD
 MON
+
+[os-cnt]
+cnt1
+
+[os-cmp]
+cmp[01:99]
+
+[os-block]
+
+[os-object]
