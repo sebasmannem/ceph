@@ -108,7 +108,7 @@
 
 - hosts: all
   vars:
-    monitors: groups['MON']
+    monitors: "{{ groups['MON'] }}"
     keyring: "{{ hostvars[groups['MON'][0]].admin_keyring.stdout }}"
     fsid: "{{ hostvars[groups['MON'][0]].cluster_fsid.stdout }}"
   roles:
