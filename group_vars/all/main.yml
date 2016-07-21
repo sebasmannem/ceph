@@ -1,4 +1,4 @@
-cluster_name: ceph
+ceph_cluster_name: ceph
 
 #cleanout any old config.
 #be afraid, be very afraid. Because setting this option to yes will break things on existing clusters.

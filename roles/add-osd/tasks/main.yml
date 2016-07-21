@@ -23,19 +23,19 @@
   register: osdnums
 
 - name: mount new osds
-  mount: name="/var/lib/ceph/osd/{{ cluster_name }}-{{ item.stdout }}/" src="{{ item.item }}" fstype=xfs state=mounted
+  mount: name="/var/lib/ceph/osd/{{ ceph_cluster_name }}-{{ item.stdout }}/" src="{{ item.item }}" fstype=xfs state=mounted
   with_items: "{{ osdnums.results }}"
 
 - name: find osd folders
-  script: osds_by_folder.sh "/var/lib/ceph/osd/{{ cluster_name }}-"
+  script: osds_by_folder.sh "/var/lib/ceph/osd/{{ ceph_cluster_name }}-"
   register: osds_by_folder
 
 - name: check that the filesystems are correctly mounted
-  script: check_osdnums_of_mounted_ceph_disks.sh "{{ cluster_name }}" "{{ item }}"
+  script: check_osdnums_of_mounted_ceph_disks.sh "{{ ceph_cluster_name }}" "{{ item }}"
   with_items: "{{ osds_by_folder.stdout_lines }}"
 
 - name: change ownership for new filesystems root dirs
-  file: path="/var/lib/ceph/osd/{{ cluster_name }}-{{ item }}/" owner=ceph group=ceph state=directory
+  file: path="/var/lib/ceph/osd/{{ ceph_cluster_name }}-{{ item }}/" owner=ceph group=ceph state=directory
   with_items: "{{ osds_by_folder.stdout_lines }}"
 
 - name: make osd structure inside osd fs
@@ -46,7 +46,7 @@
   become_user: ceph
 
 - name: add osd auth to cluster
-  command: ceph auth add "osd.{{ item }}" osd 'allow *' mon 'allow rwx' -i "/var/lib/ceph/osd/{{ cluster_name }}-{{ item }}/keyring"
+  command: ceph auth add "osd.{{ item }}" osd 'allow *' mon 'allow rwx' -i "/var/lib/ceph/osd/{{ ceph_cluster_name }}-{{ item }}/keyring"
   with_items: "{{ osds_by_folder.stdout_lines }}"
   
 - name: add osd to cluster

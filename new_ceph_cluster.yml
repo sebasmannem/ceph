@@ -26,7 +26,7 @@
     with_items:
     - /tmp/monmap
     - /tmp/ceph.mon.keyring
-    - "/var/lib/ceph/mon/{{ cluster_name }}-{{ ansible_hostname }}"
+    - "/var/lib/ceph/mon/{{ ceph_cluster_name }}-{{ ansible_hostname }}"
     when: cleanup_old_config|bool
   - name: get conf files
     fetch: dest="{{ tmpdir }}/" src="{{ item }}"
@@ -79,12 +79,12 @@
     command: monmaptool --create --add "{{ ansible_hostname }}" "{{ ansible_default_ipv4.address }}" --fsid "{{ cluster_fsid.stdout }}" /tmp/monmap
     become_user: ceph
   - name: Create a default data directory (or directories) on the monitor host(s)
-    file: path="/var/lib/ceph/mon/{{ cluster_name }}-{{ ansible_hostname }}" state=directory owner=ceph group=ceph
+    file: path="/var/lib/ceph/mon/{{ ceph_cluster_name }}-{{ ansible_hostname }}" state=directory owner=ceph group=ceph
   - name: Populate the monitor daemon(s) with the monitor map and keyring
-    command: ceph-mon --cluster "{{ cluster_name }}" --mkfs -i "{{ ansible_hostname }}" --monmap /tmp/monmap --keyring /tmp/ceph.mon.keyring
+    command: ceph-mon --cluster "{{ ceph_cluster_name }}" --mkfs -i "{{ ansible_hostname }}" --monmap /tmp/monmap --keyring /tmp/ceph.mon.keyring
     become_user: ceph
   - name: Touch the done file
-    file: path="/var/lib/ceph/mon/{{ cluster_name }}-{{ ansible_hostname }}/done" state=touch owner=ceph group=ceph
+    file: path="/var/lib/ceph/mon/{{ ceph_cluster_name }}-{{ ansible_hostname }}/done" state=touch owner=ceph group=ceph
 
 - hosts: all
   vars:

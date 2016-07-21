@@ -47,7 +47,7 @@
   with_items: '{{ ceph_services.stdout_lines }}'
 
 - name: osd folders
-  shell: "ls -d /var/lib/ceph/osd/{{ cluster_name }}-*"
+  shell: "ls -d /var/lib/ceph/osd/{{ ceph_cluster_name }}-*"
   register: osd_folders
   ignore_errors: yes
 
