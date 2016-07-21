@@ -1,0 +1,81 @@
+#!/usr/bin/env python2
+import json
+import glob
+import subprocess
+import os
+
+def get_file_size(filename):
+    "Get the file size by seeking at end"
+    fd= os.open(filename, os.O_RDONLY)
+    try:
+        return os.lseek(fd, 0, os.SEEK_END)
+    finally:
+        os.close(fd)
+
+mtab = {}
+with open('/etc/mtab') as f:
+    colnames='dev mt fstype opt auto ck'.split(' ')
+    for l in f:
+        l=l.strip()
+        cols=l.split(' ')
+        mount=dict(zip(colnames,cols))
+        mtab[mount['mt']] = mount
+
+osds=[]
+try:
+    for dir in glob.glob('/var/lib/ceph/osd/*'):
+        try:
+            osdname = os.path.basename(dir)
+            cluster_name, osdnum = osdname.split('-',1)
+            osd = { 'osd': osdnum, 'cluster': cluster_name }
+            try:
+                with open(os.path.join(dir, 'ceph_fsid')) as f:
+                    osd['cluster_fsid'] = f.read().strip()
+            except:
+                pass
+
+            try:
+                with open(os.path.join(dir, 'fsid')) as f:
+                    osd['fsid'] = f.read().strip()
+            except:
+                pass
+
+            try:
+                mount=mtab[dir]
+            except:
+                pass
+
+            for c in [ 'dev', 'fstype' ]:
+                try:
+                    osd[c] = mount[c]
+                except:
+                    pass
+            try:
+                blkid=subprocess.Popen(['blkid', '-s', 'UUID', '-o', 'value', osd['dev']], stdout=subprocess.PIPE)
+                osd['UUID'] = blkid.stdout.read().strip()
+            except:
+                pass
+            try:
+                osd['size'] = get_file_size(osd['dev'])
+            except:
+                pass
+                
+            osds.append(osd)
+        except Exception as e:
+            print(e)
+except:
+    pass
+
+mons=[]
+try:
+    for dir in glob.glob('/var/lib/ceph/mon/*'):
+        try:
+            basename = os.path.basename(dir)
+            cluster_name, monname = basename.split('-',1)
+            mons.append({ 'cluster': cluster_name, 'mon': monname})
+        except:
+            pass
+except:
+    pass
+
+print(json.dumps({'osds': osds, 'mons': mons}))

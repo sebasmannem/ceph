@@ -14,3 +14,12 @@
 
 - name: create ceph folder (if it doesnt already exist)
   file: dest=/var/lib/ceph/ owner=ceph group=ceph state=directory
+
+- name: create ansible facts folder (if it doesnt exist)
+  file: path=/etc/ansible/facts.d state=directory mode=755
+
+- name: create facts.d/ceph
+  copy: src=ceph.fact dest=/etc/ansible/facts.d/ceph.fact mode=755
+
+- name: ceph.target is the one that starts other ceph services
+  service: enabled=yes name=ceph.target
