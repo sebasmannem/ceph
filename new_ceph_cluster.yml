@@ -52,7 +52,7 @@
 
 - hosts: all
   roles:
-  - common
+  - ceph-common
 
 - hosts: MON[0]
   become: yes

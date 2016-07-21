@@ -49,7 +49,7 @@
     fsid: "{{ hostvars['localhost'].fsid }}"
     monitors: "{{groups['MON']}}"
   roles:
-  - common
+  - ceph-common
   - ceph-config
 
 - hosts: MON

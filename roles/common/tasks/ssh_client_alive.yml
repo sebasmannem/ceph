@@ -1,0 +1,7 @@
+- name: set client_alive_interval correctly in /etc/ssh/sshd_config
+  lineinfile: dest=/etc/ssh/sshd_config regexp=^ClientAliveInterval line="ClientAliveInterval 180"
+  register: client_alive_interval
+
+- name: reload ssh config
+  service: name=sshd state=reloaded
+  when: client_alive_interval.changed

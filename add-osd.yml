@@ -6,7 +6,7 @@
   become: yes
   become_method: sudo
   roles:
-  - common
+  - ceph-common
   - add-osd
 
 

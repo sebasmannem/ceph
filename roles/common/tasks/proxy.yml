@@ -1,0 +1,3 @@
+- name: copy ntp.conf
+  template: src=proxy_settings.sh dest=/etc/profile.d/proxy_settings.sh owner=root group=root mode=644
+

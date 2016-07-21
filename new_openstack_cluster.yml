@@ -3,7 +3,7 @@
 # 2: apply all common stuff to all nodes
 - hosts: all
   roles:
-  - common
+  - openstack-common
 
 - hosts: controllers
   roles:

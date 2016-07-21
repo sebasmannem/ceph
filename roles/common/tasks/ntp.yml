@@ -5,5 +5,13 @@
   - ntpdate
   - ntp-doc
 
+- name: copy ntp.conf
+  template: src=ntp.conf dest=/etc/ntp.conf owner=root group=root mode=644
+  register: ntpconf
+
 - name: update time
-  command: ntpdate 10.64.225.20 && systemctl start ntpd
+  command: ntpdate 10.64.225.20
+  when: ntpconf.changed
+
+- name: enable ntpd service
+  service: name=ntpd enabled=yes state=started
