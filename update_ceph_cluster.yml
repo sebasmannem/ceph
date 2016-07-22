@@ -21,19 +21,19 @@
     script: scripts/getConf.py -f ceph.conf -c global -k fsid "{{ mktemp.stdout }}"
     register: cluster_fsid
     changed_when: cluster_fsid.rc == 1
-    failed_when: cluster_fsid.rc > 1
+    failed_when: cluster_fsid.rc != 1
   - name: generate new fsid when needed
     command: uuidgen
     register: uuidgen
     when: cluster_fsid.rc == 0
   - name: set fsid fact
-    set_fact: fsid="{% if cluster_fsid.rc == 0 %}{{ uuidgen.stdout }}{% else %}{{ cluster_fsid.stdout }}{% endif %}"
+    set_fact: fsid="{% if cluster_fsid.rc == 0 %}{{ uuidgen.stdout }}{% else %}{{ cluster_fsid.stdout_lines[0] }}{% endif %}"
 
   - name: find keyring
     script: scripts/getConf.py -f ceph.client.admin.keyring -c client.admin -k key "{{ mktemp.stdout }}"
     register: cluster_keyring
     changed_when: cluster_keyring.rc == 1
-    failed_when: cluster_keyring.rc > 1
+    failed_when: cluster_keyring.rc != 1
     #You can find the at: "{{hostvars['localhost'].cluster_keyring.stdout}}"
 
   - name: remove tempfolder
