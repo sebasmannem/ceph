@@ -72,9 +72,12 @@
   file: dest="{{ item }}" state=absent
   with_items: '{{ osd_folders.stdout_lines }}'
 
-- name: Crush
+- name: Crush remove osds
   command: /usr/bin/ceph osd crush remove "{{ item }}"
   with_items: '{{ host_osds.stdout_lines }}'
+
+- name: Crush remove host
+  command: /usr/bin/ceph osd crush remove "{{ ansible_hostname }}"
 
 - name: Remove Authkey
   command: /usr/bin/ceph auth del "{{ item }}"

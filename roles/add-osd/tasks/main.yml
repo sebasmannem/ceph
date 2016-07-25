@@ -1,3 +1,11 @@
+- name: add host to crush map
+  command: ceph osd crush add-bucket "{{ ansible_host }}" host
+  register: ceph_add_bucket
+
+- name: move to default if newly added
+  command: ceph osd crush move "{{ ansible_host }}" root=default
+  when: '"already exists" not in ceph_add_bucket.stderr'
+
 - name: setup disks 
   command: parted -s "/dev/{{ item.key }}" -- 'mklabel gpt mkpart "ceph data" xfs 1 -1'
   with_dict: "{{ ansible_devices }}" 
@@ -49,7 +57,7 @@
   command: ceph auth add "osd.{{ item }}" osd 'allow *' mon 'allow rwx' -i "/var/lib/ceph/osd/{{ ceph_cluster_name }}-{{ item }}/keyring"
   with_items: "{{ osds_by_folder.stdout_lines }}"
   
-- name: add osd to cluster
+- name: add osd to crushmap
   command: ceph osd crush add "osd.{{ item }}" 1.0 host="{{ ansible_hostname }}"
   with_items: "{{ osds_by_folder.stdout_lines }}"
 
