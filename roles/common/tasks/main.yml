@@ -1,7 +1,6 @@
-#- include: puppet.yml
+- include: ssh.yml
 - include: packages.yml
 - include: ntp.yml
 - include: dns.yml
 - include: motd.yml
-- include: ssh_client_alive.yml
 - include: proxy.yml

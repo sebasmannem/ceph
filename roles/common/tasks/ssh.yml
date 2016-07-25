@@ -5,3 +5,7 @@
 - name: reload ssh config
   service: name=sshd state=reloaded
   when: client_alive_interval.changed
+
+- name: set authorized_keys (if not already)
+  authorized_key: user=root key="{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
+
