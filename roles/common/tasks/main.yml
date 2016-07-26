@@ -1,5 +1,5 @@
-- include: ssh.yml
 - include: packages.yml
+- include: ssh.yml
 - include: ntp.yml
 - include: dns.yml
 - include: motd.yml
