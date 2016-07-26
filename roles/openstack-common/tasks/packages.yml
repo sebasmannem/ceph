@@ -1,0 +1,13 @@
+- name: install centos-release-openstack-mitaka package
+  yum: name=centos-release-openstack-mitaka state=present
+  register: yum_mitaka
+
+- name: upgrade all packages
+  yum: name=* state=latest
+  when: yum_mitaka.changed
+
+- name: install some opnstack packages
+  yum: name="{{ item }}" state=present
+  with_items:
+  - python-openstackclient
+  - openstack-selinux

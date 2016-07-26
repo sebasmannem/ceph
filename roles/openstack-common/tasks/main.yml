@@ -4,3 +4,4 @@
    - "{{ passwordvars }}.yml"
    - "passwords.yml"
 - include: manual_network.yml
+- include: packages.yml
