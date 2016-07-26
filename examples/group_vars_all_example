@@ -1,17 +1,11 @@
-ceph_cluster_name: ceph
+####################
+# COMMON DEAFULTS
+####################
 
 #cleanout any old config.
 #be afraid, be very afraid. Because setting this option to yes will break things on existing clusters.
 # And it should not be needed to use it on new clusters.
 cleanup_old_config: no
-
-ceph_client_nw: 192.168.2.1/24
-
-#Public network (client - ceph, where ceph listens on). ansible will detect interface to use.
-ceph_public_nw: 192.168.3.1/24
-
-#Cluster network (ceph - ceph). ansible will detect interface to use.
-ceph_cluster_nw: 192.168.4.1/24
 
 ntp_hosts:
 - 0.pool.ntp.org
@@ -22,6 +16,24 @@ ntp_hosts:
 dns_hosts:
 - 8.8.8.8
 - 8.8.4.4
+
+proxy_server: "http://myproxy:8080"
+
+
+
+####################
+# CEPH DEFAULTS
+####################
+
+ceph_cluster_name: ceph
+
+ceph_client_nw: 192.168.2.1/24
+
+#Public network (client - ceph, where ceph listens on). ansible will detect interface to use.
+ceph_public_nw: 192.168.3.1/24
+
+#Cluster network (ceph - ceph). ansible will detect interface to use.
+ceph_cluster_nw: 192.168.4.1/24
 
 proxy_server: "http://myproxy:8080"
 
@@ -53,3 +65,16 @@ osd_pool_default_pgp_num: "{{ osd_pool_default_pg_num }}"
 #Description: The bucket type to use for chooseleaf in a CRUSH rule. Uses ordinal rank rather than name.
 #Default:     1. Typically a host containing one or more Ceph OSD Daemons.
 osd_crush_chooseleaf_type: 1
+
+
+
+####################
+# OPENSTACK DEFAULTS
+####################
+
+# This variabele decides wich password file to load.
+# you can have a passwordfile per cluster and use that with
+# ansible-playbook -e 'passwordvars=passwords_[cluster]'
+# where [cluster] is replaced by the name of the cluster.
+passwordvars: passwords
+
