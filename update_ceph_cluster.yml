@@ -7,7 +7,7 @@
     command: mktemp -d
     register: mktemp
 
-- hosts: all
+- hosts: CEPH
   tasks:
   - name: get conf files
     fetch: dest="{{hostvars['localhost'].mktemp.stdout}}/" src="{{ item }}"
@@ -41,7 +41,7 @@
 
 # This was to find an/or generate fsid and keyring
 
-- hosts: all
+- hosts: CEPH
   become: yes
   become_method: sudo
   vars:

@@ -1,23 +1,23 @@
 # This first step is important for 2 things:
 # 1: gather facts of all hosts
 # 2: apply all common stuff to all nodes
-- hosts: all
+- hosts: OPENSTACK
   roles:
   - openstack-common
 
-- hosts: controllers
+- hosts: OS-CNT
   roles:
   - controller
 
-- hosts: compute
+- hosts: OS-CMP
   roles:
   - compute
 
-- hosts: block
+- hosts: OS-BLOCK
   roles:
   - block
 
-- hosts: object
+- hosts: OS-OBJECT
   roles:
   - object
 

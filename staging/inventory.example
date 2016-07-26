@@ -15,12 +15,18 @@ ceph-mon9
 OSD
 MON
 
-[os-cnt]
-cnt1
+[OS-CNT]
+cnt001
 
-[os-cmp]
+[OS-CMP]
 cmp[01:99]
 
-[os-block]
+[OS-BLOCK]
 
-[os-object]
+[OS-OBJECT]
+
+[OPENSTACK:children]
+OS-CNT
+OS-CMP
+OS-BLOCK
+OS-OBJECT

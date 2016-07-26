@@ -8,7 +8,7 @@
     register: mktemp
 
 - hosts:
-  - all
+  - CEPH
   vars:
     tmpdir: "{{hostvars['localhost'].mktemp.stdout}}"
   tasks:
@@ -50,7 +50,7 @@
 
 # This was to detect that no fsid and keyring are set
 
-- hosts: all
+- hosts: CEPH
   roles:
   - ceph-common
 
@@ -86,7 +86,7 @@
   - name: Touch the done file
     file: path="/var/lib/ceph/mon/{{ ceph_cluster_name }}-{{ ansible_hostname }}/done" state=touch owner=ceph group=ceph
 
-- hosts: all
+- hosts: CEPH
   vars:
     monitors:
     - "{{ groups['MON'][0] }}"
@@ -106,7 +106,7 @@
   roles:
   - add-mon
 
-- hosts: all
+- hosts: CEPH
   vars:
     monitors: "{{ groups['MON'] }}"
     keyring: "{{ hostvars[groups['MON'][0]].admin_keyring.stdout }}"
