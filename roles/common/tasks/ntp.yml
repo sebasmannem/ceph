@@ -1,20 +1,11 @@
+# Using chrony is default for openstack mitaka deployment. Lets use it for both openstack and ceph...
+
 - name: install some packages that are needed for ceph
-  yum: name={{ item }} state=present
-  with_items:
-  - ntp
-  - ntpdate
-  - ntp-doc
+  yum: name=chrony state=present
 
-- name: copy ntp.conf
-  template: src=ntp.conf dest=/etc/ntp.conf owner=root group=root mode=644
-  register: ntpconf
-
-- name: update time
-  command: ntpdate -b "{{ ntp_hosts[0] }}"
-  when: ntpconf.changed
+- name: copy chrony.conf
+  template: src=chrony.conf dest=/etc/chrony.conf owner=root group=root mode=644
+  register: chronyconf
 
 - name: enable ntpd service
-  service: name=ntpd enabled=yes state=started
-
-- name: wait 60 times 10000ms for ntp to be correct within 300ms
-  script: wait_ntp.py -n 300 -c 60 -d 10000
+  service: name=chronyd enabled=yes state=started
