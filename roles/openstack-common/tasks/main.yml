@@ -1,0 +1,6 @@
+- name: read passwords
+  include_vars: "{{ item }}"
+  with_first_found:
+   - "{{ passwordvars }}.yml"
+   - "passwords.yml"
+- include: manual_network.yml

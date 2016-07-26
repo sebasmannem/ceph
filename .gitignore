@@ -5,3 +5,4 @@ staging/*
 !staging/inventory.example
 group_vars/all/*
 !group_vars/all/main.yml.example
+roles/openstack-common/vars/passwords.yml

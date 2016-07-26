@@ -1,0 +1,21 @@
+- name: collect network interface files
+  shell: ls /etc/sysconfig/network-scripts/ifcfg-eno*
+  register: network_interface_files
+
+- name: add lines to network interface files
+  vars:
+    lines:
+    - { key: "NM_CONTROLLED", value: "no" }
+    - { key: "ONBOOT", value: "yes" }
+    - { key: "BOOTPROTO", value: "static" }
+  lineinfile: dest="{{ item[0] }}" regexp="{{ item[1].key }}=" value="{{ item[1].key }}={{ item[1].value }}"
+  with_nested:
+  - "{{ network_interface_files.stdout_lines }}"
+  - "{{ lines }}"
+  register: network_interface_files_lines
+
+- name: Disable NetworkManager and enable network
+  service: name="{{ item.name }}" enabled="{{ item.enabled }}" state="{{ item.state }}"
+  with_items:
+  - { name: NetworkManager, enabled: no, state: stopped}
+  - { name: network, enabled: yes, state: restarted}
