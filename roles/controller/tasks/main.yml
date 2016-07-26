@@ -1,0 +1,4 @@
+- include: mariadb.yml
+- include: mongodb.yml
+- include: rabbitmq.yml
+- include: memcached.yml

@@ -1,0 +1,13 @@
+- name: install mongodb packages
+  yum: name="{{ item }}" state=present
+  with_items:
+  - mongodb-server
+  - mongodb
+- name: change mongodb config
+  lineinfile: dest=/etc/mongod.conf regexp="{{ item.key }} +=" line="{{ item.key }} = {{ item.value }}"
+  with_items:
+  - { key: "bind_ip", value: "{{ ansible_default_ipv4.address }}" }
+  - { key: "smallfiles", value: "true" }
+- name: start and enable mongodb service
+  service: name=mongod state=started enabled=true
+

@@ -1,0 +1,13 @@
+- name: mariadb packages
+  yum: name="{{ item }}" state=present
+  with_items:
+  - mariadb
+  - mariadb-server
+  - python2-PyMySQL
+- name: openstack.cnf
+  template: src=openstack.cnf dest=/etc/my.cnf.d/openstack.cnf force=no
+- name: mariadb service
+  service: name=mariadb state=started enabled=yes
+
+- name: mysql_secure_installation
+  script: secure_mariadb.py -p "{{ ROOT_DBPASS }}" -o ""

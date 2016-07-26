@@ -1,0 +1,9 @@
+- name: install memcached binaries
+  yum: name="{{ item }}" state=present
+  with_items:
+  - memcached
+  - python-memcached
+
+- name: start and enable memcached service
+  service: name=memcached state=started enabled=yes
+

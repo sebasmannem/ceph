@@ -1,0 +1,17 @@
+- name: install rabbitmq binaries
+  yum: name=rabbitmq-server state=present
+
+- name: start and enable service
+  service: name=rabbitmq-server state=started enabled=yes
+
+- name: check for users
+  command: rabbitmqctl list_users
+  register: rabbitmq_users
+
+- name: create rabbitmq openstack user
+  command: rabbitmqctl add_user openstack "{{ RABBIT_PASS }}"
+  when: '"\nopenstack" not in rabbitmq_users.stdout'
+
+- name: set permissions for rabbitmq openstack user
+  command: rabbitmqctl set_permissions openstack ".*" ".*" ".*"
+  when: '"\nopenstack" not in rabbitmq_users.stdout'

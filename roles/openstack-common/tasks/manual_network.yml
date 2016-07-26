@@ -19,3 +19,4 @@
   with_items:
   - { name: NetworkManager, enabled: no, state: stopped}
   - { name: network, enabled: yes, state: restarted}
+  when: network_interface_files_lines|changed
