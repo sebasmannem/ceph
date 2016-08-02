@@ -32,4 +32,25 @@
 - name: init fernet keys
   command: keystone-manage fernet_setup --keystone-user keystone --keystone-group keystone
 
+- name: set ServerName in Apache config
+  lineinfile: dest=/etc/httpd/conf/httpd.conf regexp="#?ServerName" line="ServerName {{ ansible_hostname }}"
+
+- name: create wsgi file
+  template: src=wsgi-keystone.conf dest=/etc/httpd/conf.d/wsgi-keystone.conf mode=600 owner=root group=root
+
+- name: enable and start service
+  service: name=httpd state=started enabled=yes
+
+- name: create service entity, API endpoints, domains, projects, users and roles
+  script: "keystone_default_setup.py -t '{{ admin_token.stdout_lines[0] }}' -p '{{ ADMIN_PASS }}'"
+
+- name: remove admin_token_auth from keystone-paste.ini
+  replace: dest=/etc/keystone/keystone-paste.ini regexp="(pipeline *=.*)( admin_token_auth)(.*)" replace="\1\3"
+
+- name: verify keystone operation
+  shell: "openstack --os-auth-url http://openstack001:5000/v3 --os-project-domain-name default --os-user-domain-name default   --os-project-name {{item.project}} --os-username {{item.user}} token issue --os-password {{item.password}} -f json  "
+  with_items:
+  - { project: admin, user: admin, password: "{{ ADMIN_PASS }}" }
+  - { project: demo, user: demo, password: demo }
+  register: verify_keystone
 
