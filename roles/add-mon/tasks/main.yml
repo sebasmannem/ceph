@@ -34,7 +34,7 @@
 
 # This creates a running monitor on the right ip adress:
 #- name: Start Ceph mon service
-#  command: ceph-mon -i {{ ansible_hostname }} --public-addr {{ ansible_default_ipv4.address }}:6789
+#  command: ceph-mon -i {{ ansible_hostname }} --public-addr {{ ansible_default_ipv4.address }}:{{ monitor_port }}
 #  when: "'{{ ansible_hostname }}' not in mon_result.stdout"
 #
 # However, if we add:

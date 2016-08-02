@@ -1,5 +1,5 @@
 ####################
-# COMMON DEAFULTS
+# COMMON DEFAULTS
 ####################
 
 #cleanout any old config.
@@ -34,8 +34,6 @@ ceph_public_nw: 192.168.3.1/24
 
 #Cluster network (ceph - ceph). ansible will detect interface to use.
 ceph_cluster_nw: 192.168.4.1/24
-
-proxy_server: "http://myproxy:8080"
 
 #Port for ceph monitor proces
 monitor_port: 6789
