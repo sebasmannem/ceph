@@ -2,3 +2,4 @@
 - include: mongodb.yml
 - include: rabbitmq.yml
 - include: memcached.yml
+- include: keystone.yml

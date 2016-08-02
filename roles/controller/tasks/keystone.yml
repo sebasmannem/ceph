@@ -1,0 +1,35 @@
+- name: create keystone database
+  mysql_db: name=keystone state=present login_password="{{ ROOT_DBPASS }}"
+
+- name: grant access to keystone database
+  command: mysql --password="{{ ROOT_DBPASS }}" -e "GRANT ALL PRIVILEGES ON keystone.* TO 'keystone'@'{{ item }}' IDENTIFIED BY '{{ KEYSTONE_DBPASS }}'"
+  with_items:
+  - localhost
+  - '%'
+
+- name: generate keystone admin token
+  script: admin_token.py
+  register: admin_token
+
+- name: install keystone packages
+  yum: name="{{ item }}" state=present
+  with_items:
+  - openstack-keystone
+  - httpd
+  - mod_wsgi
+
+- name: configure keystone.conf
+  ini_file: dest=/etc/keystone/keystone.conf section="{{ item.section }}" option="{{ item.option }}" value="{{ item.value }}" backup=yes
+  with_items:
+  - { section: DEFAULT, option: admin_token, value: "{{ admin_token.stdout_lines[0] }}" }
+  - { section: database, option: connection, value: "mysql+pymysql://keystone:{{ KEYSTONE_DBPASS }}@{{ ansible_hostname }}/keystone" }
+  - { section: token, option: provider, value: fernet }
+
+- name: populate identity service database
+  become_user: keystone
+  command: "keystone-manage db_sync"
+
+- name: init fernet keys
+  command: keystone-manage fernet_setup --keystone-user keystone --keystone-group keystone
+
+

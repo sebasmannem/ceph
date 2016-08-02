@@ -4,6 +4,8 @@
   - mariadb
   - mariadb-server
   - python2-PyMySQL
+  - MySQL-python
+    # Neeeded for ansible mysql modules
 - name: openstack.cnf
   template: src=openstack.cnf dest=/etc/my.cnf.d/openstack.cnf force=no
 - name: mariadb service
