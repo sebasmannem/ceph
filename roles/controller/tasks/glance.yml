@@ -1,0 +1,70 @@
+- name: create glance database
+  mysql_db: name=glance state=present login_password="{{ ROOT_DBPASS }}"
+
+- name: grant access to glance database
+  command: mysql --password="{{ ROOT_DBPASS }}" -e "GRANT ALL PRIVILEGES ON glance.* TO 'glance'@'{{ item }}' IDENTIFIED BY '{{ GLANCE_DBPASS }}'"
+  with_items:
+  - localhost
+  - '%'
+
+- name: create service entity, API endpoints, domains, projects, users and roles
+  script: "glance_default_setup.py -p '{{ GLANCE_PASS }}'"
+  environment:
+    OS_PROJECT_DOMAIN_NAME: default
+    OS_USER_DOMAIN_NAME: default
+    OS_PROJECT_NAME: admin
+    OS_USERNAME: admin
+    OS_PASSWORD: "{{ ADMIN_PASS }}"
+    OS_AUTH_URL: "http://{{ ansible_hostname }}:35357/v3"
+    OS_IDENTITY_API_VERSION: 3
+    OS_IMAGE_API_VERSION: 2
+
+- name: install glance packages
+  yum: name="openstack-glance" state=present
+
+- name: configure glance-api.conf
+  ini_file: dest=/etc/glance/glance-api.conf section="{{ item.section }}" option="{{ item.option }}" value="{{ item.value }}" backup=yes
+  with_items:
+  - { section: database, option: connection, value: "mysql+pymysql://glance:{{ GLANCE_DBPASS }}@{{ ansible_hostname }}/glance" }
+  - { section: glance_authtoken, option: auth_uri, value: "http://{{ ansible_hostname }}:5000" }
+  - { section: glance_authtoken, option: auth_url, value: "http://{{ ansible_hostname }}:35357" }
+  - { section: glance_authtoken, option: memcached_servers, value: "{{ ansible_hostname }}:11211" }
+  - { section: glance_authtoken, option: auth_type, value: pasword }
+  - { section: glance_authtoken, option: project_domain_name, value: default }
+  - { section: glance_authtoken, option: user_domain_name, value: default }
+  - { section: glance_authtoken, option: project_name, value: service }
+  - { section: glance_authtoken, option: username, value: glance }
+  - { section: glance_authtoken, option: password, value: "{{ GLANCE_PASS }}" }
+  - { section: paste_deploy, option: flavor, value: glance }
+    #Documentation says: Note Comment out or remove any other options in the [glance_authtoken] section
+    #This s not needed for a fresh installation and not yet implemented
+  - { section: glance_store, option: stores, value: "file,http" }
+  - { section: glance_store, option: default_store, value: file }
+  - { section: glance_store, option: filesystem_store_datadir, value: "/var/lib/glance/images/" }
+
+- name: configure glance-registry.conf
+  ini_file: dest=/etc/glance/glance-registry.conf section="{{ item.section }}" option="{{ item.option }}" value="{{ item.value }}" backup=yes
+  with_items:
+  - { section: database, option: connection, value: "mysql+pymysql://glance:{{ GLANCE_DBPASS }}@{{ ansible_hostname }}/glance" }
+  - { section: glance_authtoken, option: auth_uri, value: "http://{{ ansible_hostname }}:5000" }
+  - { section: glance_authtoken, option: auth_url, value: "http://{{ ansible_hostname }}:35357" }
+  - { section: glance_authtoken, option: memcached_servers, value: "{{ ansible_hostname }}:11211" }
+  - { section: glance_authtoken, option: auth_type, value: pasword }
+  - { section: glance_authtoken, option: project_domain_name, value: default }
+  - { section: glance_authtoken, option: user_domain_name, value: default }
+  - { section: glance_authtoken, option: project_name, value: service }
+  - { section: glance_authtoken, option: username, value: glance }
+  - { section: glance_authtoken, option: password, value: "{{ GLANCE_PASS }}" }
+  - { section: paste_deploy, option: flavor, value: glance }
+    #Documentation says: Note Comment out or remove any other options in the [glance_authtoken] section
+    #This s not needed for a fresh installation and not yet implemented
+
+- name: populate identity service database
+  become_user: glance
+  command: "glance-manage db_sync"
+
+- name: enable and start service
+  service: name="{{ item }}" state=started enabled=yes
+  with_items:
+  - openstack-glance-api
+  - openstack-glance-registry
