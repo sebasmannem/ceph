@@ -11,6 +11,23 @@ parser.add_argument('-r', '--regions', dest='regions', default='RegionOne', help
 parser.add_argument('-u', '--urls', dest='urls', help='list of urls (comma seperated) of urls to create. Example: admin=http://localhost:35357/v3,public=http://localhost:5000/v3,internal=http://localhost:5000/v3')
 args = parser.parse_args()
 
+#Find all environment variablen starting with 'OS_'
+env = dict([ (k, v) for k, v in os.environ.items() if k[:3] == 'OS_' ])
+
+#Add all exported variablen in args.openrc file
+env_re = re.compile('^\s*export\s+(\S)=(.*)$')
+if args.openrc:
+    openrc = os.path.expanduser(args.openrc)
+    with open(openrc, 'r') as f:
+        for line in f:
+            line = line.rstrip()
+            m = env_re.search(s)
+            if m:
+                k, v = m.groups()
+                if k[:3] == 'OS_':
+                    env[k] = v
+#env should now contain everything needed for openstack command to operate as needed
+
 service = args.service.lower()
 servicetype = args.servicetype.lower()
 regions = args.regions.split(',')
@@ -24,7 +41,7 @@ urls = urls.split(',')
 urls = dict([ tuple(u.split('=')) for u in urls if u.count('=') == 1 ])
 
 print("checking for service existence")
-openstack=Popen(["openstack", "service", "list", "--format", "json"], stdout=PIPE)
+openstack=Popen(["openstack", "service", "list", "--format", "json"], stdout=PIPE, env=env)
 svcs = openstack.stdout.read()
 svcs = json.loads(svcs)
 existing_services = [ str(svc['Name']) for svc in svcs if svc['Type']==servicetype ]
@@ -34,7 +51,7 @@ if service not in existing_services:
     check_call(["openstack", "service", "create", "--name", service, "--description", "OpenStack {0} service {1}".format(servicetype, service), servicetype])
 
 print("checking for endpoint existence")
-openstack=Popen(["openstack", "endpoint", "list", "--format", "json"], stdout=PIPE)
+openstack=Popen(["openstack", "endpoint", "list", "--format", "json"], stdout=PIPE, env=env)
 eps = openstack.stdout.read()
 eps = json.loads(eps)
 existing_regions = [ str(ep['Region']) for ep in eps if ep['Service Name'] == service ]
