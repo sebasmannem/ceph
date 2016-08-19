@@ -41,19 +41,17 @@
 - name: enable and start service
   service: name=httpd state=started enabled=yes
 
-- name: create service entity, API endpoints, domains, projects, users and roles
-  script: "keystone_default_setup.py --adminpassword '{{ ADMIN_PASS }}' --demopassword '{{ DEMO_PASS }}'"
-  environment:
-    OS_PROJECT_DOMAIN_NAME: default
-    OS_USER_DOMAIN_NAME: default
-    OS_PROJECT_NAME: admin
-    OS_USERNAME: admin
-    OS_PASSWORD: "{{ ADMIN_PASS }}"
-    OS_AUTH_URL: "http://{{ ansible_hostname }}:35357/v3"
-    OS_IDENTITY_API_VERSION: 3
-    OS_IMAGE_API_VERSION: 2
-#    OS_TOKEN: '{{ admin_token.stdout_lines[0] }}'
-#    OS_URL: "http://{{ ansible_hostname }}:35357/v3"
+- name: deploy openrc file
+  template: src=new-openrc dest="/root/admin-openrc" owner=root group=root mode=400 force=no
+
+- name: create service entity, API endpoints
+  script: keystone_service.py -s keystone -t identity -r RegionOne -u 'admin=http://{{ ansible_hostname }}:35357/v3,public=http://{{ ansible_hostname }}:5000/v3,internal=http://{{ ansible_hostname }}:5000/v3'
+
+- name: create domains, projects, users and roles
+  script: keystone_user.py -d default -u "{{ item.name }}" -p "{{ item.password }}" -r  "{{ item.roles }}" -o /root/admin-openrc
+  with_items:
+    - { name: admin, password: '{{ ADMIN_PASS }}', roles: 'admin:admin' }
+    - { name: demo, password: '{{ DEMO_PASS }}', roles: 'demo:user' }
 
 - name: remove admin_token_auth from keystone-paste.ini
   replace: dest=/etc/keystone/keystone-paste.ini regexp="(pipeline *=.*)( admin_token_auth)(.*)" replace="\1\3"

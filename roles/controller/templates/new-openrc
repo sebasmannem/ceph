@@ -1,0 +1,3 @@
+export OS_TOKEN={{ admin_token.stdout_lines[0] }}
+export OS_URL=http://{{ ansible_hostname }}:35357/v3
+export OS_IDENTITY_API_VERSION=3
