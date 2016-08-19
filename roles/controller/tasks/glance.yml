@@ -7,17 +7,14 @@
   - localhost
   - '%'
 
-- name: create service entity, API endpoints, domains, projects, users and roles
-  script: "glance_default_setup.py -p '{{ GLANCE_PASS }}'"
-  environment:
-    OS_PROJECT_DOMAIN_NAME: default
-    OS_USER_DOMAIN_NAME: default
-    OS_PROJECT_NAME: admin
-    OS_USERNAME: admin
-    OS_PASSWORD: "{{ ADMIN_PASS }}"
-    OS_AUTH_URL: "http://{{ ansible_hostname }}:35357/v3"
-    OS_IDENTITY_API_VERSION: 3
-    OS_IMAGE_API_VERSION: 2
+- name: create service entity, API endpoints
+  script: keystone_service.py -s glance -t image -r RegionOne -u 'admin=http://{{ ansible_hostname }}:9292,public=http://{{ ansible_hostname }}:9292,internal=http://{{ ansible_hostname }}:9292' -o /root/admin-openrc
+
+- name: create domains, projects, users and roles
+  script: keystone_user.py -d default -u "{{ item.name }}" -p "{{ item.password }}" -r  "{{ item.roles }}" -o /root/admin-openrc
+  with_items:
+    - { name: admin, password: '{{ ADMIN_PASS }}', roles: 'admin:admin' }
+    - { name: demo, password: '{{ DEMO_PASS }}', roles: 'demo:user' }
 
 - name: install glance packages
   yum: name="openstack-glance" state=present

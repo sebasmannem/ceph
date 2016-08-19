@@ -11,7 +11,7 @@ parser = argparse.ArgumentParser(description='Create keystone domain, users, pro
 parser.add_argument('-d', '--domain', dest='domain', default='default', help='user domain')
 parser.add_argument('-u', '--user', dest='user', help='user name')
 parser.add_argument('-p', '--password', dest='password', help='user password')
-parser.add_argument('-r', '--roles', dest='role', default='', help='list of roles for user in projects. Format project1:role1,project2:role2')
+parser.add_argument('-r', '--roles', dest='roles', default='', help='list of roles for user in projects. Format project1:role1,project2:role2')
 parser.add_argument('-o', '--openrc', dest='openrc', default='', help='openrc file with credentials to openstack')
 args = parser.parse_args()
 
@@ -19,13 +19,13 @@ args = parser.parse_args()
 env = dict([ (k, v) for k, v in os.environ.items() if k[:3] == 'OS_' ])
 
 #Add all exported variablen in args.openrc file
-env_re = re.compile('^\s*export\s+(\S)=(.*)$')
+env_re = re.compile('^\s*export\s+(\S+)=(.*)$')
 if args.openrc:
     openrc = os.path.expanduser(args.openrc)
     with open(openrc, 'r') as f:
         for line in f:
             line = line.rstrip()
-            m = env_re.search(s)
+            m = env_re.search(line)
             if m:
                 k, v = m.groups()
                 if k[:3] == 'OS_':
@@ -61,7 +61,7 @@ existing_domains = [ str(d['Name']) for d in ds ]
 
 if domain not in existing_domains:
     print("creating domain {0}".format(domain))
-    check_call(["openstack", "domain", "create", "--description", "{0} domain".format(domain.capitalize()), domain])
+    check_call(["openstack", "domain", "create", "--description", "{0} domain".format(domain.capitalize()), domain], env=env)
 
 print("checking for project existence")
 openstack=Popen(["openstack", "project", "list", "--format", "json"], stdout=PIPE, env=env)
@@ -72,7 +72,7 @@ existing_projects = [ str(p['Name']) for p in ps ]
 for project in projects:
     if project not in existing_projects:
         print("creating project {0}".format(project))
-        check_call(["openstack", "project", "create", "--domain", domain, "--description", "{0} project".format(project.capitalize()), project])
+        check_call(["openstack", "project", "create", "--domain", domain, "--description", "{0} project".format(project.capitalize()), project], env=env)
 
 print("checking for user existence")
 openstack=Popen(["openstack", "user", "list", "--format", "json"], stdout=PIPE, env=env)
@@ -80,9 +80,9 @@ us = openstack.stdout.read()
 us = json.loads(us)
 existing_users = [ str(u['Name']).lower() for u in us ]
 
-if user not in user_names:
+if user not in existing_users:
     print("creating user {0}".format(user))
-    check_call(["openstack", "user", "create", "--domain", domain, "--password", str(args.password), user])
+    check_call(["openstack", "user", "create", "--domain", domain, "--password", str(args.password), user], env=env)
 
 print("checking for role existence")
 openstack=Popen(["openstack", "role", "list", "--format", "json"], stdout=PIPE, env=env)
@@ -93,9 +93,9 @@ existing_roles = [ str(r['Name']) for r in rs ]
 for role in roles:
     if role not in existing_roles:
         print("creating role {0}".format(role))
-        check_call(["openstack", "role", "create", role])
+        check_call(["openstack", "role", "create", role], env=env)
 
 for project, role in project_roles:
     print("adding {0} role to {1} user for {2} project".format(role, user, project))
-    check_call(["openstack", "role", "add", "--project", project, "--user", user, role])
+    check_call(["openstack", "role", "add", "--project", project, "--user", user, role], env=env)
 

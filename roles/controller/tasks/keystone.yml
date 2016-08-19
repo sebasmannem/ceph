@@ -45,7 +45,7 @@
   template: src=new-openrc dest="/root/admin-openrc" owner=root group=root mode=400 force=no
 
 - name: create service entity, API endpoints
-  script: keystone_service.py -s keystone -t identity -r RegionOne -u 'admin=http://{{ ansible_hostname }}:35357/v3,public=http://{{ ansible_hostname }}:5000/v3,internal=http://{{ ansible_hostname }}:5000/v3'
+  script: keystone_service.py -s keystone -t identity -r RegionOne -u 'admin=http://{{ ansible_hostname }}:35357/v3,public=http://{{ ansible_hostname }}:5000/v3,internal=http://{{ ansible_hostname }}:5000/v3' -o /root/admin-openrc
 
 - name: create domains, projects, users and roles
   script: keystone_user.py -d default -u "{{ item.name }}" -p "{{ item.password }}" -r  "{{ item.roles }}" -o /root/admin-openrc
