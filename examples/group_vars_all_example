@@ -24,7 +24,7 @@ proxy_server: "http://myproxy:8080"
 ####################
 # CEPH DEFAULTS
 ####################
-
+# For now this cluster name cannot be changed! Leave it, or the deployment will break!
 ceph_cluster_name: ceph
 
 ceph_client_nw: 192.168.2.1/24
