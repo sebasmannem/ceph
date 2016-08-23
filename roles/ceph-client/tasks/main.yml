@@ -1,0 +1,4 @@
+- include: packages.yml
+- include: ceph_config.yml
+- include: ceph_client.yml
+

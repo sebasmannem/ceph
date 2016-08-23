@@ -1,0 +1,39 @@
+---
+# Add a new Client to a CEPH cluster
+
+- hosts: localhost
+  tasks:
+  - name: make tempfolder
+    command: mktemp -d
+    register: mktemp
+
+
+
+
+# Fetch ceph config
+- hosts: 
+  - CEPH[0]
+  tasks:
+  - name: get ceph keyring file
+    fetch: dest="{{hostvars['localhost'].mktemp.stdout}}/" src="{{ item }}" flat=yes 
+    with_items:
+    - /etc/ceph/ceph.conf
+    - /etc/ceph/ceph.client.admin.keyring
+
+- hosts:
+  - CLNT
+  become: yes
+  become_method: sudo
+  roles:
+  - common
+  - ceph-client
+
+
+- hosts: localhost
+  tasks:
+  - name: remove tempfolder
+    file: dest="{{ hostvars['localhost'].mktemp.stdout }}" state=absent
+
+
+
+
