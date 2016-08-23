@@ -7,9 +7,6 @@
     command: mktemp -d
     register: mktemp
 
-
-
-
 # Fetch ceph config
 - hosts: 
   - CEPH[0]
@@ -27,7 +24,6 @@
   roles:
   - common
   - ceph-client
-
 
 - hosts: localhost
   tasks:
