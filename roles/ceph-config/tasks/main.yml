@@ -1,6 +1,6 @@
-- name: template ceph.conf
-  template: src="{{ item }}" dest=/etc/ceph/ owner=root group=root mode=644
-  with_items:
-  - ceph.conf
-  - ceph.client.admin.keyring
+- name: deploy current ceph config 
+  copy: src=/tmp/ceph104/etc/ceph/ceph.conf dest=/etc/ceph/ owner=root group=root mode=644
+#  with_items:
+#  - ceph.conf
+#  - ceph.client.admin.keyring
 

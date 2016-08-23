@@ -1,0 +1,3 @@
+- name: Put ceph config files on clients
+  copy: src="{{hostvars['localhost'].mktemp.stdout}}/" dest=/etc/ceph/ owner=root group=root mode=0644
+
