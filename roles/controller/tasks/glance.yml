@@ -11,10 +11,7 @@
   script: keystone_service.py -s glance -t image -r RegionOne -u 'admin=http://{{ ansible_hostname }}:9292,public=http://{{ ansible_hostname }}:9292,internal=http://{{ ansible_hostname }}:9292' -o /root/admin-openrc
 
 - name: create domains, projects, users and roles
-  script: keystone_user.py -d default -u "{{ item.name }}" -p "{{ item.password }}" -r  "{{ item.roles }}" -o /root/admin-openrc
-  with_items:
-    - { name: admin, password: '{{ ADMIN_PASS }}', roles: 'admin:admin' }
-    - { name: demo, password: '{{ DEMO_PASS }}', roles: 'demo:user' }
+  script: keystone_user.py -d default -u glance -p "{{ GLANCE_PASS }}" -r 'service:admin' -o /root/admin-openrc
 
 - name: install glance packages
   yum: name="openstack-glance" state=present
