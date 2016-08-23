@@ -1,0 +1,72 @@
+- name: create nova database
+  mysql_db: name="{{ item }}" state=present login_password="{{ ROOT_DBPASS }}"
+  with_items:
+    - nova_api
+    - nova
+
+- name: grant access to nova database
+  command: mysql --password="{{ ROOT_DBPASS }}" -e "GRANT ALL PRIVILEGES ON {{ item[1] }}.* TO 'nova'@'{{ item[0] }}' IDENTIFIED BY '{{ NOVA_DBPASS }}'"
+  with_nested:
+  - [ localhost, '%' ]
+  - [ nova_api, nova ]
+
+- name: create service entity, API endpoints
+  script: keystone_service.py -s nova -t compute -r RegionOne -u 'admin=http://{{ ansible_hostname }}:8774/v2.1/%(tenant_id)s,internal=http://{{ ansible_hostname }}:8774/v2.1/%(tenant_id)s,admin=http://{{ ansible_hostname }}:8774/v2.1/%(tenant_id)s' -o /root/admin-openrc
+
+- name: create domains, projects, users and roles
+  script: keystone_user.py -d default -u nova -p "{{ NOVA_PASS }}" -r 'service:admin' -o /root/admin-openrc
+
+- name: install nova packages
+  yum: name="{{ item }}" state=present
+  with_items:
+  - openstack-nova-api
+  - openstack-nova-conductor
+  - openstack-nova-console 
+  - openstack-nova-novncproxy
+  - openstack-nova-scheduler
+
+- name: configure nova.conf
+  ini_file: dest=/etc/nova/nova.conf section="{{ item.section }}" option="{{ item.option }}" value="{{ item.value }}" backup=yes
+  with_items:
+  - { section: DEFAULT, option: enabled_apis, value: "osapi_compute,metadata" }
+  - { section: api_database, option: connection, value: "mysql+pymysql://nova:{{ NOVA_DBPASS }}@{{ ansible_hostname }}/nova_api" }
+  - { section: database, option: connection, value: "mysql+pymysql://nova:{{ NOVA_DBPASS }}@{{ ansible_hostname }}/nova" }
+  - { section: DEFAULT, option: rpc_backend, value: rabbit }
+  - { section: oslo_messaging_rabbit, option: rabbit_host, value: "{{ ansible_hostname }}" }
+  - { section: oslo_messaging_rabbit, option: rabbit_userid, value: openstack }
+  - { section: oslo_messaging_rabbit, option: rabbit_password, value: "{{ RABBIT_PASS }}" }
+  - { section: DEFAULT, option: auth_strategy, value: keystone }
+  - { section: keystone_authtoken, option: auth_uri, value: "http://{{ ansible_hostname }}:5000" }
+  - { section: nova_authtoken, option: auth_url, value: "http://{{ ansible_hostname }}:35357" }
+  - { section: nova_authtoken, option: memcached_servers, value: "{{ ansible_hostname }}:11211" }
+  - { section: nova_authtoken, option: auth_type, value: pasword }
+  - { section: nova_authtoken, option: project_domain_name, value: default }
+  - { section: nova_authtoken, option: user_domain_name, value: default }
+  - { section: nova_authtoken, option: project_name, value: service }
+  - { section: nova_authtoken, option: username, value: nova }
+  - { section: nova_authtoken, option: password, value: "{{ NOVA_PASS }}" }
+  - { section: DEFAULT, option: my_ip, value: "{{ ansible_default_ipv4.address }}" }
+  - { section: DEFAULT, option: use_neutron, value: "True" }
+  - { section: DEFAULT, option: firewall_driver, value: nova.virt.firewall.NoopFirewallDriver }
+  - { section: vnc, option: vncserver_listen, value: "{{ ansible_default_ipv4.address }}" }
+  - { section: vnc, option: vncserver_proxycleint_address, value: "{{ ansible_default_ipv4.address }}" }
+  - { section: glance, option: api_servers, value: "http://{{ ansible_hostname }}:9292" }
+  - { section: oslo_concurrency, option: lock_path, value: /var/lib/nova/tmp }
+
+
+- name: populate identity service database
+  become_user: nova
+  command: "{{ item }}"
+  with_items:
+  - "nova-manage api_db sync"
+  - "nova-manage db sync"
+
+- name: enable and start service
+  service: name="{{ item }}" state=started enabled=yes
+  with_items:
+  - openstack-nova-api.service
+  - openstack-nova-consoleauth.service
+  - openstack-nova-scheduler.service
+  - openstack-nova-conductor.service
+  - openstack-nova-novncproxy.service
+
